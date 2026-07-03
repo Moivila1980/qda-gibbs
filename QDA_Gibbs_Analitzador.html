@@ -120,7 +120,8 @@
   <button data-tab="informe">2 · Informe</button>
   <button data-tab="codis">3 · Temes i cites</button>
   <button data-tab="llibre">4 · Anàlisis a aplicar</button>
-  <button data-tab="exporta">5 · Taula i exporta</button>
+  <button data-tab="visual">5 · Representació visual</button>
+  <button data-tab="exporta">6 · Taula i exporta</button>
 </nav>
 
 <main>
@@ -239,7 +240,26 @@
   <div id="zona-llibre"></div>
 </section>
 
-<!-- ══════════ 5 · TAULA I EXPORTA ══════════ -->
+<!-- ══════════ 5 · REPRESENTACIÓ VISUAL ══════════ -->
+<section class="tab" id="tab-visual">
+  <div class="caixa" style="background:var(--accent-clar); border-color:var(--accent);">
+    <b>Traduir resultats qualitatius a formats visuals.</b> Miles & Huberman (1994): «coneixes allò que mostres» — el <i>display</i> és part de l'anàlisi, no un adorn. L'app llegeix l'estructura de la teva anàlisi, puntua quines representacions hi encaixen (Verdinelli & Scagnoli, 2013) i et deixa aplicar-ne una, diverses o el paquet sencer.
+  </div>
+  <div class="caixa" id="visual-banner"></div>
+  <div class="caixa">
+    <div class="fila">
+      <div><label>Què vols mostrar? (re-ordena les propostes)</label><div class="chips" id="visual-intents"></div></div>
+      <div style="flex:0 0 320px;"><label>Destinació</label><div class="chips" id="visual-targets"></div></div>
+    </div>
+    <div class="accions">
+      <button class="b" id="btn-visual-generar">▶ Genera les visuals seleccionades</button>
+      <span class="nota" id="visual-estat"></span>
+    </div>
+  </div>
+  <div id="zona-visuals"></div>
+</section>
+
+<!-- ══════════ 6 · TAULA I EXPORTA ══════════ -->
 <section class="tab" id="tab-exporta">
   <div class="caixa">
     <h2>Taula participant × codi</h2>
@@ -1750,13 +1770,342 @@ $('fitxer-paquet').onchange = async ()=>{
 function esborraProjecte(){
   if(analitzant || ocupatLlibre){ alert('Espera que acabi l\'anàlisi en curs.'); return; }
   if(!confirm('Netejar TOT (fitxer, codis, informe i anàlisis) per començar un tema nou?\n\nLes claus del motor es conserven. Si vols guardar la feina, primer fes «Desa-ho tot en un fitxer» (pestanya 5).')) return;
-  estat = {projecte:{nom:'',pregunta:'',proposit:'',enfocament:'mixt'}, docs:[], codis:{}, informe:'', analisis:{}, preparacio:null, descartades:0, taulaFeta:false};
-  taulaDades = null; ultimResum = '';
+  estat = {projecte:{nom:'',pregunta:'',proposit:'',enfocament:'mixt'}, docs:[], codis:{}, informe:'', analisis:{}, visuals:{}, preparacio:null, descartades:0, taulaFeta:false};
+  taulaDades = null; ultimResum = ''; visTriades = new Set();
   localStorage.removeItem(CLAU_LS);
   refresca();
 }
 $('btn-esborra').onclick = esborraProjecte;
 $('btn-neteja-tot').onclick = esborraProjecte;
+
+/* ═══════════════ REPRESENTACIÓ VISUAL (Miles & Huberman 1994; Verdinelli & Scagnoli 2013) ═══════════════ */
+const VIS_INTENTS = [['estructura','Estructura de temes'],['jerarquia','Jerarquia'],['relacions','Relacions'],['comparacio','Comparar casos'],['distribucio','Distribució'],['cooc','Co-ocurrències'],['proces','Procés'],['teoria','Model teòric'],['informe','Resum per a informe']];
+const VIS_TARGETS = [['article','Article'],['tesi','Tesi'],['presentacio','Presentació'],['docencia','Docència']];
+let visTriades = new Set(), visIntents = new Set(), visTargets = new Set(), visOcupat = false;
+
+function firmaAnalisi(){
+  const temes = Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria');
+  const codis = Object.entries(estat.codis).filter(([,c])=>c.tipus!=='categoria');
+  const casos = new Set(codis.flatMap(([,c])=>(c.citacions||[]).map(ci=>ci.cas)));
+  return {
+    temes: temes.length, codis: codis.length,
+    cites: codis.reduce((a,[,c])=>a+(c.citacions||[]).length,0),
+    casos: casos.size,
+    jerarquia: temes.length>0,
+    creuCasos: atributsDisponibles().length>0,
+    cooc: codis.length>=2 && casos.size>=2,
+    teoric: !!(estat.analisis && estat.analisis.model_axial),
+    proces: !!(estat.analisis && estat.analisis.narrativa)
+  };
+}
+function temesTop(){
+  return Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').map(([nom,t])=>({
+    nom, def: t.definicio,
+    fills: Object.entries(estat.codis).filter(([,c])=>c.pare===nom)
+      .sort((a,b)=>b[1].citacions.length-a[1].citacions.length),
+    participants: new Set(Object.entries(estat.codis).filter(([,c])=>c.pare===nom)
+      .flatMap(([,c])=>c.citacions.filter(ci=>ci.rev!=='no').map(ci=>ci.cas))).size
+  })).sort((a,b)=>b.participants-a.participants);
+}
+const cur = s => esc(String(s).replace(/_/g,' ').slice(0,30));
+function svgText(x,y,text,mida,pes,color,ancora){
+  const paraules = String(text).replace(/_/g,' ').split(' ');
+  const linies = []; let l = '';
+  paraules.forEach(p=>{ if((l+' '+p).trim().length>18){ linies.push(l.trim()); l = p; } else l += ' '+p; });
+  if(l.trim()) linies.push(l.trim());
+  return linies.slice(0,3).map((ln,i)=>`<text x="${x}" y="${y+i*(mida+2)}" font-size="${mida}" font-weight="${pes||400}" fill="${color||'#1f2937'}" text-anchor="${ancora||'middle'}" font-family="Segoe UI,sans-serif">${esc(ln)}</text>`).join('');
+}
+function svgEmbolcall(w,h,cos){
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="background:#fff; max-width:100%; height:auto;">`+
+    `<defs><marker id="fl" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#1e56a0"/></marker></defs>`+cos+'</svg>';
+}
+
+const VIS_CATALEG = [
+ {id:'mapa_tematic', nom:'Mapa temàtic', fam:'nucli qualitatiu', pes:95,
+  fonament:'Braun & Clarke (2006): el mapa temàtic és una eina de les fases 4-5 de l\'anàlisi temàtica — mostra els temes, subtemes i com es relacionen amb el conjunt. Verdinelli & Scagnoli (2013) el situen entre els displays més usats en publicacions qualitatives.',
+  forts:'Fa visible l\'arquitectura global; ideal per a la figura 1 d\'un article.', limits:'Es carrega amb massa nodes: es limiten els codis a 3 per tema.',
+  intents:['estructura','relacions'], requereix:'temes',
+  genera: async ()=>{
+    const ts = temesTop().slice(0,8);
+    const W=980, H=760, cx=W/2, cy=H/2;
+    let cos = `<circle cx="${cx}" cy="${cy}" r="64" fill="#1e56a0"/>`+svgText(cx,cy-8,estat.projecte.nom||'Corpus',14,700,'#fff')+svgText(cx,cy+26,firmaAnalisi().casos+' participants',10,400,'#dbe7f6');
+    ts.forEach((t,i)=>{
+      const a = -Math.PI/2 + i*2*Math.PI/ts.length, tx = cx+Math.cos(a)*250, ty = cy+Math.sin(a)*250;
+      cos = `<line x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}" stroke="#93b3d8" stroke-width="2"/>`+cos;
+      cos += `<circle cx="${tx}" cy="${ty}" r="52" fill="#e8f0fa" stroke="#1e56a0" stroke-width="2"/>`+svgText(tx,ty-6,t.nom,11,700,'#0f3b6e')+svgText(tx,ty+30,t.participants+' part.',9,400,'#6b7280');
+      t.fills.slice(0,3).forEach(([et],j)=>{
+        const a2 = a + (j-1)*0.42, sx = cx+Math.cos(a2)*365, sy = cy+Math.sin(a2)*365;
+        cos = `<line x1="${tx}" y1="${ty}" x2="${sx}" y2="${sy}" stroke="#d1d5db" stroke-width="1.2"/>`+cos;
+        cos += `<circle cx="${sx}" cy="${sy}" r="7" fill="#fef3c7" stroke="#b45309"/>`+svgText(sx,sy+20,et,9,400,'#374151');
+      });
+    });
+    return {tipus:'svg', contingut: svgEmbolcall(W,H,cos)};
+  }},
+
+ {id:'arbre_taxonomic', nom:'Arbre taxonòmic', fam:'jerarquia', pes:88,
+  fonament:'Gibbs (cap. 6, Recuadro 6.1): la jerarquia arrel → pares → fills és una anàlisi en si mateixa — ordena, prevé duplicats i obre preguntes analítiques. Màxim 3 nivells, com el llibre recomana.',
+  forts:'Clarifica nivells i dependències d\'un cop d\'ull.', limits:'Expressa malament les relacions creuades (per a això, el mapa temàtic o la xarxa).',
+  intents:['jerarquia','estructura'], requereix:'temes',
+  genera: async ()=>{
+    const ts = temesTop().slice(0,8);
+    const ampl = Math.max(940, ts.length*150), H = 470;
+    let cos = `<rect x="${ampl/2-80}" y="16" width="160" height="40" rx="8" fill="#1e56a0"/>`+svgText(ampl/2,41,estat.projecte.nom||'Corpus',12,700,'#fff');
+    ts.forEach((t,i)=>{
+      const x = (i+0.5)*ampl/ts.length;
+      cos += `<line x1="${ampl/2}" y1="56" x2="${x}" y2="108" stroke="#93b3d8" stroke-width="1.6"/>`;
+      cos += `<rect x="${x-68}" y="108" width="136" height="46" rx="7" fill="#e8f0fa" stroke="#1e56a0" stroke-width="1.6"/>`+svgText(x,127,t.nom,10,700,'#0f3b6e')+svgText(x,145,t.participants+' participants',8.5,400,'#6b7280');
+      t.fills.slice(0,5).forEach(([et,c],j)=>{
+        const y = 186+j*52;
+        cos += `<line x1="${x}" y1="154" x2="${x}" y2="${y}" stroke="#d1d5db" stroke-width="1"/>`;
+        cos += `<rect x="${x-64}" y="${y}" width="128" height="38" rx="5" fill="#fff" stroke="#d1d5db"/>`+svgText(x,y+15,et,8.5,400,'#374151')+svgText(x,y+30,c.citacions.length+' cites',7.5,400,'#9ca3af');
+      });
+    });
+    return {tipus:'svg', contingut: svgEmbolcall(ampl,H,cos)};
+  }},
+
+ {id:'matriu_casos', nom:'Matriu casos × temes (mapa de calor)', fam:'matriu', pes:93,
+  fonament:'Miles & Huberman (1994): els displays matricials són el cor de l\'anàlisi — permeten la comparació sistemàtica dins i entre casos. Gibbs (Tabla 6.5): amb un atribut de cas, les files són subgrups i les cel·les text de diversos.',
+  forts:'Lectura transversal immediata; publicable com a taula.', limits:'Amb molts casos es fa densa: s\'agrega per subgrup si hi ha atributs.',
+  intents:['comparacio','distribucio'], requereix:'temes',
+  genera: async ()=>{
+    const ts = temesTop();
+    const atrs = atributsDisponibles();
+    let files, etiqueta;
+    if(atrs.length){
+      const valors = [...new Set(estat.docs.map(d=>(d.atributs||{})[atrs[0]]).filter(Boolean))].sort();
+      etiqueta = atrs[0];
+      files = valors.map(v=>{
+        const docsV = new Set(estat.docs.filter(d=>(d.atributs||{})[atrs[0]]===v).map(d=>d.id));
+        return {nom: v+' (n='+docsV.size+')', valors: ts.map(t=> new Set(t.fills.flatMap(([,c])=>c.citacions.filter(ci=>ci.rev!=='no'&&docsV.has(ci.cas)).map(ci=>ci.cas))).size / (docsV.size||1))};
+      });
+    }else{
+      etiqueta = 'Participant';
+      files = estat.docs.slice(0,25).map(d=>({nom:d.id, valors: ts.map(t=> t.fills.some(([,c])=>c.citacions.some(ci=>ci.cas===d.id && ci.rev!=='no')) ? 1 : 0)}));
+    }
+    let html = '<table><tr><th>'+esc(etiqueta)+'</th>'+ts.map(t=>'<th style="font-size:11px;">'+cur(t.nom)+'</th>').join('')+'</tr>';
+    files.forEach(f=>{
+      html += '<tr><td><b>'+esc(f.nom)+'</b></td>'+f.valors.map(v=>{
+        const pct = Math.round(v*100);
+        return '<td style="text-align:center; background:rgba(30,86,160,'+(v*0.75).toFixed(2)+');'+(v>0.55?' color:#fff;':'')+'">'+(pct? pct+'%':'—')+'</td>';
+      }).join('')+'</tr>';
+    });
+    html += '</table><div class="nota" style="margin-top:6px;">Cel·la = proporció de participants del subgrup que expressen el tema. Els percentatges descriuen presència, no importància (Sandelowski, 2001): la interpretació segueix sent qualitativa.</div>';
+    return {tipus:'html', contingut: html};
+  }},
+
+ {id:'barres_temes', nom:'Barres de presència per tema', fam:'qualitatiu quantificat', pes:79,
+  fonament:'Sandelowski (2001): els números en recerca qualitativa són legítims per mostrar presència i patró, mai com a mesura d\'importància. Gibbs (cap. 7) hi afegeix el llenguatge prudent: «una minoria», «bona part».',
+  forts:'Resum immediat de la presència relativa de cada tema.', limits:'No substitueix la interpretació; freqüent ≠ important.',
+  intents:['distribucio','informe'], requereix:'temes',
+  genera: async ()=>{
+    const ts = temesTop();
+    const maxP = Math.max(...ts.map(t=>t.participants),1), total = firmaAnalisi().casos;
+    const H = ts.length*46+70, W = 860;
+    let cos = svgText(W/2,26,'Participants que expressen cada tema (de '+total+')',13,700,'#0f3b6e');
+    ts.forEach((t,i)=>{
+      const y = 60+i*46, w = 480*t.participants/maxP;
+      cos += svgText(190,y+16,t.nom,11,600,'#1f2937','end');
+      cos += `<rect x="205" y="${y}" width="${w}" height="26" rx="4" fill="#1e56a0" opacity="${0.55+0.45*t.participants/maxP}"/>`;
+      cos += `<text x="${212+w}" y="${y+18}" font-size="11" fill="#374151" font-family="Segoe UI,sans-serif">${t.participants}</text>`;
+    });
+    return {tipus:'svg', contingut: svgEmbolcall(W,H,cos)};
+  }},
+
+ {id:'xarxa_cooc', nom:'Xarxa de co-ocurrències', fam:'xarxa', pes:90,
+  fonament:'Namey et al. (2008) i Gibbs (cap. 8-9, cerca booleana AND): els codis que co-ocorren en els mateixos participants suggereixen dominis connectats. Coffey & Atkinson: co-ocurrència no és relació — cada aresta s\'ha de llegir al text.',
+  forts:'Fa visibles agrupacions que la llista de temes amaga.', limits:'Complexa per a lectors no metodòlegs; es filtra a les 12 arestes més fortes.',
+  intents:['cooc','relacions'], requereix:'temes',
+  genera: async ()=>{
+    const codis = Object.entries(estat.codis).filter(([,c])=>c.tipus!=='categoria'&&(c.citacions||[]).length)
+      .sort((a,b)=>b[1].citacions.length-a[1].citacions.length).slice(0,10);
+    const casosDe = {}; codis.forEach(([et,c])=>{ casosDe[et] = new Set(c.citacions.filter(ci=>ci.rev!=='no').map(ci=>ci.cas)); });
+    const arestes = [];
+    for(let i=0;i<codis.length;i++) for(let j=i+1;j<codis.length;j++){
+      const n = [...casosDe[codis[i][0]]].filter(x=>casosDe[codis[j][0]].has(x)).length;
+      if(n>=2) arestes.push([i,j,n]);
+    }
+    arestes.sort((a,b)=>b[2]-a[2]); const top = arestes.slice(0,12);
+    const maxA = Math.max(...top.map(a=>a[2]),1);
+    const W=880,H=680,cx=W/2,cy=H/2,R=250;
+    const pos = codis.map((_,i)=>{ const a=-Math.PI/2+i*2*Math.PI/codis.length; return [cx+Math.cos(a)*R, cy+Math.sin(a)*R]; });
+    let cos = '';
+    top.forEach(([i,j,n])=> cos += `<line x1="${pos[i][0]}" y1="${pos[i][1]}" x2="${pos[j][0]}" y2="${pos[j][1]}" stroke="#1e56a0" stroke-width="${(1+4*n/maxA).toFixed(1)}" opacity="${(0.25+0.55*n/maxA).toFixed(2)}"/>`);
+    codis.forEach(([et,c],i)=>{
+      const r = 14+16*Math.min(1,c.citacions.length/30);
+      cos += `<circle cx="${pos[i][0]}" cy="${pos[i][1]}" r="${r}" fill="#e8f0fa" stroke="#1e56a0" stroke-width="2"/>`+svgText(pos[i][0],pos[i][1]+r+16,et,10,600,'#0f3b6e');
+    });
+    cos += svgText(cx,30,'Gruix = nº de participants on els dos codis co-ocorren',11,400,'#6b7280');
+    return {tipus:'svg', contingut: svgEmbolcall(W,H,cos)};
+  }},
+
+ {id:'panell_cites', nom:'Panell de temes amb cites', fam:'informe', pes:91,
+  fonament:'King (a Gibbs, Tabla 3.2): presentació temàtica amb un exemple per il·lustrar cada tema — l\'estructura clàssica del capítol de resultats. Checklist de citacions de Kvale (Recuadro 7.2): cada cita contextualitzada i interpretada.',
+  forts:'Traçabilitat tema→evidència directa; llest per enganxar a l\'esborrany.', limits:'Menys sintètic visualment que un mapa.',
+  intents:['informe','estructura'], requereix:'temes',
+  genera: async ()=>{
+    const ts = temesTop();
+    let html = ts.map(t=>'<div style="border:1px solid var(--vora); border-left:4px solid var(--accent); border-radius:6px; padding:10px 14px; margin-bottom:10px;">'+
+      '<b style="color:var(--accent-fosc);">'+cur(t.nom)+'</b> <span class="comptador">('+t.participants+' participants)</span>'+
+      '<div class="nota">'+esc(t.def||'')+'</div>'+
+      t.fills.slice(0,2).flatMap(([et,c])=>c.citacions.filter(ci=>ci.rev!=='no').slice(0,1).map(ci=>
+        '<div class="cita-verbatim" style="margin-top:6px;">«'+esc(ci.text.slice(0,220))+'» <span class="ref-font" data-doc="'+esc(ci.cas)+'" data-linia="'+esc(ci.linia)+'">('+esc(ci.cas)+', l. '+esc(ci.linia)+')</span> <span class="comptador">['+cur(et)+']</span></div>')).join('')+
+      '</div>').join('');
+    return {tipus:'html', contingut: html};
+  }},
+
+ {id:'mapa_conceptual', nom:'Mapa conceptual (relacions etiquetades)', fam:'conceptual', pes:92,
+  fonament:'Novak & Gowin (1984): conceptes en nivells amb PARAULES D\'ENLLAÇ que expliciten la relació («condiciona», «compensa», «reforça») — el que un mapa temàtic no diu. Molt útil per a docència i síntesi teòrica.',
+  forts:'Explicita el sentit de cada relació, no només que existeix.', limits:'Usa el motor (1 crida) per derivar les relacions; revisa-les abans de publicar.',
+  intents:['relacions','teoria'], requereix:'temes', llm:true,
+  genera: async ()=>{
+    const ts = temesTop().slice(0,8);
+    const r = await cridaLLM('A partir d\'aquests temes d\'una anàlisi qualitativa, proposa les 6-10 relacions MÉS defensables entre parells de temes, cadascuna amb un verb d\'enllaç curt en català (estil Novak & Gowin: "condiciona", "compensa", "reforça", "limita"). Només relacions que el material faci plausibles.\n\nTemes:\n'+ts.map(t=>'- '+t.nom+': '+t.def).join('\n')+'\n\nRespon NOMÉS JSON: {"relacions":[{"de":"nom_tema","a":"nom_tema","verb":"..."}]}', true);
+    const W=980,H=740,cx=W/2,cy=H/2,R=280;
+    const pos = {}; ts.forEach((t,i)=>{ const a=-Math.PI/2+i*2*Math.PI/ts.length; pos[t.nom]=[cx+Math.cos(a)*R, cy+Math.sin(a)*R]; });
+    let cos = '';
+    (r.relacions||[]).forEach(rel=>{
+      const de = idNet(String(rel.de)).toLowerCase(), a = idNet(String(rel.a)).toLowerCase();
+      const p1 = pos[de], p2 = pos[a]; if(!p1||!p2) return;
+      const mx=(p1[0]+p2[0])/2, my=(p1[1]+p2[1])/2;
+      cos += `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" stroke="#1e56a0" stroke-width="1.6" marker-end="url(#fl)" opacity="0.6"/>`;
+      cos += `<rect x="${mx-52}" y="${my-11}" width="104" height="20" rx="9" fill="#fef3c7"/>`+svgText(mx,my+4,String(rel.verb||'').slice(0,18),9.5,600,'#92400e');
+    });
+    ts.forEach(t=>{ const p=pos[t.nom]; cos += `<circle cx="${p[0]}" cy="${p[1]}" r="50" fill="#e8f0fa" stroke="#1e56a0" stroke-width="2"/>`+svgText(p[0],p[1]-2,t.nom,10.5,700,'#0f3b6e')+svgText(p[0],p[1]+26,t.participants+' part.',8.5,400,'#6b7280'); });
+    return {tipus:'svg', contingut: svgEmbolcall(W,H,cos)};
+  }},
+
+ {id:'diagrama_teoric', nom:'Diagrama de construcció teòrica (axial)', fam:'teoria', pes:94,
+  fonament:'Strauss & Corbin (1990; a Gibbs, Tabla 6.7): condicions causals → fenomen (en un context, amb condicions intervinents) → estratègies → conseqüències. Converteix la llista de temes en un esquema explicatiu.',
+  forts:'El pas de descriure a EXPLICAR, en una sola figura.', limits:'Requereix abstracció: usa el motor (1 crida); si has fet l\'anàlisi «Model axial», parteix d\'ella.',
+  intents:['teoria','proces'], requereix:'temes', llm:true,
+  genera: async ()=>{
+    const base = estat.analisis && estat.analisis.model_axial ? '\n\nANÀLISI AXIAL PRÈVIA (sigues coherent amb ella):\n'+estat.analisis.model_axial.md.slice(0,3500) : '';
+    const r = await cridaLLM('Sintetitza el model axial (Strauss & Corbin) d\'aquesta anàlisi en frases MOLT curtes (màx 8 paraules per element).\n\nTemes:\n'+temesTop().map(t=>'- '+t.nom+': '+t.def).join('\n')+base+'\n\nRespon NOMÉS JSON: {"condicions":["..."],"fenomen":"...","context":["..."],"intervinents":["..."],"estrategies":["..."],"consequencies":["..."]}', true);
+    const W=1060,H=560;
+    const col = (x,titol,items,color,fons)=>{
+      let s = svgText(x+85,40,titol,12,700,color);
+      (items||[]).slice(0,4).forEach((it,i)=>{ s += `<rect x="${x}" y="${60+i*70}" width="170" height="56" rx="7" fill="${fons}" stroke="${color}" stroke-width="1.4"/>`+svgText(x+85,84+i*70,it,9.5,500,'#1f2937'); });
+      return s;
+    };
+    let cos = col(20,'Condicions causals',r.condicions,'#b45309','#fef3c7');
+    cos += `<rect x="230" y="200" width="190" height="88" rx="10" fill="#1e56a0"/>`+svgText(325,232,'FENOMEN',10,700,'#dbe7f6')+svgText(325,254,r.fenomen||'',10.5,700,'#fff');
+    cos += col(230,'Context',r.context,'#6b7280','#f3f4f6');
+    for(let i=0;i<Math.min(4,(r.condicions||[]).length);i++) cos += `<line x1="190" y1="${88+i*70}" x2="228" y2="240" stroke="#b45309" stroke-width="1.4" marker-end="url(#fl)"/>`;
+    cos += col(450,'Cond. intervinents',r.intervinents,'#6b7280','#f3f4f6');
+    cos += col(660,'Estratègies',r.estrategies,'#0f3b6e','#e8f0fa');
+    cos += `<line x1="420" y1="244" x2="658" y2="120" stroke="#1e56a0" stroke-width="1.6" marker-end="url(#fl)"/>`;
+    cos += col(880,'Conseqüències',r.consequencies,'#15803d','#dcfce7');
+    for(let i=0;i<Math.min(4,(r.estrategies||[]).length);i++) cos += `<line x1="830" y1="${88+i*70}" x2="878" y2="${88+i*70}" stroke="#15803d" stroke-width="1.4" marker-end="url(#fl)"/>`;
+    return {tipus:'svg', contingut: svgEmbolcall(W,H,cos)};
+  }},
+
+ {id:'diagrama_proces', nom:'Diagrama de procés / seqüència', fam:'procés', pes:87,
+  fonament:'Miles & Huberman (1994): les xarxes d\'esdeveniments i estats ordenen trajectòries; Gibbs (cap. 5, Labov & Waletzky) hi aporta l\'estructura seqüencial de les narracions (orientació → complicació → avaluació → resolució).',
+  forts:'Ideal per a experiències viscudes i trajectòries (p. ex. un curs acadèmic).', limits:'Simplifica la simultaneïtat; usa el motor (1 crida) per derivar les etapes.',
+  intents:['proces'], requereix:'temes', llm:true,
+  genera: async ()=>{
+    const r = await cridaLLM('A partir d\'aquests temes, proposa la SEQÜÈNCIA o procés que millor ordena l\'experiència dels participants (4-6 etapes, nom curt + 1 frase). Si el material no té lògica temporal, ordena de condicions → experiències → respostes → propostes.\n\nTemes:\n'+temesTop().map(t=>'- '+t.nom+': '+t.def).join('\n')+'\n\nRespon NOMÉS JSON: {"etapes":[{"nom":"...","descripcio":"..."}]}', true);
+    const et = (r.etapes||[]).slice(0,6);
+    const W = Math.max(900, et.length*185), H=260;
+    let cos = '';
+    et.forEach((e,i)=>{
+      const x = 20+i*180;
+      cos += `<rect x="${x}" y="70" width="160" height="110" rx="10" fill="${i%2? '#e8f0fa':'#fff'}" stroke="#1e56a0" stroke-width="1.6"/>`;
+      cos += svgText(x+80,95,(i+1)+'. '+e.nom,11,700,'#0f3b6e')+svgText(x+80,125,e.descripcio||'',8.5,400,'#374151');
+      if(i<et.length-1) cos += `<line x1="${x+162}" y1="125" x2="${x+178}" y2="125" stroke="#1e56a0" stroke-width="2" marker-end="url(#fl)"/>`;
+    });
+    return {tipus:'svg', contingut: svgEmbolcall(W,H,cos)};
+  }},
+];
+
+function puntuaVisual(v, f){
+  let p = v.pes;
+  v.intents.forEach(i=>{ if(visIntents.has(i)) p += 12; });
+  if(visTargets.has('docencia') && (v.id==='mapa_conceptual'||v.id==='arbre_taxonomic')) p += 6;
+  if((visTargets.has('article')||visTargets.has('tesi')) && (v.id==='panell_cites'||v.id==='mapa_tematic'||v.id==='matriu_casos')) p += 6;
+  if(v.id==='diagrama_teoric' && f.teoric) p += 8;
+  if(v.id==='diagrama_proces' && f.proces) p += 8;
+  if(v.id==='matriu_casos' && f.creuCasos) p += 6;
+  return Math.min(100, Math.round(p));
+}
+
+function pintaVisuals(){
+  const f = firmaAnalisi();
+  $('visual-banner').innerHTML = f.temes
+    ? '<b>Estructura detectada:</b> '+f.temes+' temes · '+f.codis+' codis · '+f.cites+' cites · '+f.casos+' participants · jerarquia '+(f.jerarquia?'✓':'—')+' · atributs de cas '+(f.creuCasos?'✓':'—')+' · co-ocurrències '+(f.cooc?'✓':'—')+' · model teòric previ '+(f.teoric?'✓ (model axial fet)':'—')+' · anàlisi narrativa prèvia '+(f.proces?'✓':'—')
+    : '<span class="avis-text"><b>Encara no hi ha anàlisi.</b> Fes primer l\'anàlisi completa (pestanya 1): les propostes visuals es construeixen sobre els temes, codis i cites finals.</span>';
+  $('visual-intents').innerHTML = VIS_INTENTS.map(([k,l])=>'<span class="chip'+(visIntents.has(k)?' on':'')+'" data-k="'+k+'" data-grup="i">'+l+'</span>').join('');
+  $('visual-targets').innerHTML = VIS_TARGETS.map(([k,l])=>'<span class="chip'+(visTargets.has(k)?' on':'')+'" data-k="'+k+'" data-grup="t">'+l+'</span>').join('');
+  document.querySelectorAll('#visual-intents .chip, #visual-targets .chip').forEach(ch=> ch.onclick = ()=>{
+    const s = ch.dataset.grup==='i' ? visIntents : visTargets;
+    s.has(ch.dataset.k) ? s.delete(ch.dataset.k) : s.add(ch.dataset.k);
+    pintaVisuals();
+  });
+  estat.visuals = estat.visuals || {};
+  const ordenats = VIS_CATALEG.map(v=>({v, p: puntuaVisual(v,f)})).sort((a,b)=>b.p-a.p);
+  $('zona-visuals').innerHTML = ordenats.map(({v,p})=>{
+    const fet = estat.visuals[v.id];
+    const apte = f.temes>0;
+    return `<div class="caixa">
+      <h2><label style="display:inline; text-transform:none; letter-spacing:0; cursor:pointer;"><input type="checkbox" class="vis-tria" data-id="${v.id}" ${visTriades.has(v.id)?'checked':''} ${!apte?'disabled':''} style="width:auto; margin-right:6px;">${esc(v.nom)}</label>
+        <span class="pill categoria">${esc(v.fam)}</span>
+        <span class="pill ${p>=90?'analitic':'descriptiu'}" title="Adequació segons l'estructura detectada i la teva intenció">${p}% adequació</span>
+        ${v.llm? '<span class="comptador">· usa el motor</span>':''}</h2>
+      <div class="nota" style="margin-bottom:4px;"><b>Fonament:</b> ${esc(v.fonament)}</div>
+      <div class="nota"><b>Fort:</b> ${esc(v.forts)} <b style="margin-left:8px;">Límit:</b> ${esc(v.limits)}</div>
+      <div class="accions">
+        <button class="b" onclick="generaVisual('${v.id}')" ${(!apte||visOcupat)?'disabled':''}>${fet?'↻ Regenera':'▶ Genera'}</button>
+        ${fet? `<button class="b sec" onclick="baixaVisual('${v.id}','${fet.tipus==='svg'?'svg':'doc'}')">${fet.tipus==='svg'?'SVG':'Word'}</button>`+(fet.tipus==='svg'? `<button class="b sec" onclick="baixaVisual('${v.id}','png')">PNG</button>`:'') : ''}
+        <span class="nota" id="vis-estat-${v.id}">${fet? 'Generada el '+fet.data+'.' : ''}</span>
+      </div>
+      ${fet? `<details open style="margin-top:8px;"><summary style="cursor:pointer; color:var(--accent-fosc); font-weight:600;">Mostra la visual</summary><div style="margin-top:8px; overflow-x:auto;">${fet.contingut}</div></details>` : ''}
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.vis-tria').forEach(ch=> ch.onchange = ()=>{ ch.checked ? visTriades.add(ch.dataset.id) : visTriades.delete(ch.dataset.id); });
+}
+
+async function generaVisual(id){
+  if(visOcupat) return;
+  const v = VIS_CATALEG.find(x=>x.id===id);
+  visOcupat = true;
+  const el = document.getElementById('vis-estat-'+id); if(el) el.textContent = '⟳ generant…';
+  window.__clausRun = clausClassificades();
+  try{
+    const res = await v.genera();
+    estat.visuals[id] = {...res, data: avui()};
+    desa();
+  }catch(e){ alert('La visual «'+v.nom+'» ha fallat: '+e.message); }
+  finally{ visOcupat = false; window.__clausRun = null; pintaVisuals(); }
+}
+$('btn-visual-generar').onclick = async ()=>{
+  if(!visTriades.size){ alert('Marca almenys una proposta (casella al costat del nom).'); return; }
+  for(const id of visTriades){
+    $('visual-estat').textContent = '⟳ generant '+id.replace(/_/g,' ')+'…';
+    await generaVisual(id);
+  }
+  $('visual-estat').textContent = '✓ Fetes.';
+};
+
+function baixaVisual(id, format){
+  const fet = estat.visuals[id]; if(!fet) return;
+  if(format==='svg') return descarrega(id+'.svg', fet.contingut, 'image/svg+xml');
+  if(format==='doc'){
+    const doc = '<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:Arial; font-size:11pt;} table{border-collapse:collapse;} td,th{border:1px solid #999; padding:4pt 8pt;}</style></head><body>'+fet.contingut+'</body></html>';
+    return descarrega(id+'.doc', '﻿'+doc, 'application/msword');
+  }
+  if(format==='png'){
+    const img = new Image();
+    img.onload = ()=>{
+      const c = document.createElement('canvas');
+      c.width = img.width*2; c.height = img.height*2;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.scale(2,2); ctx.drawImage(img,0,0);
+      c.toBlob(b=>{ const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = id+'.png'; a.click(); }, 'image/png');
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(fet.contingut);
+  }
+}
 
 /* ──────────── INFORME DE PREPARACIÓ + CHECK-LIST OBLIGATORI (Gibbs cap. 1-2) ──────────── */
 function pintaPreparacio(){
@@ -1818,7 +2167,7 @@ function refresca(){
   $('cfg-pregunta').value = estat.projecte.pregunta || '';
 
   estat.analisis = estat.analisis || {};
-  refrescaBoto(); pintaInforme(); pintaCodis(); pintaTaula(); pintaLlibre();
+  refrescaBoto(); pintaInforme(); pintaCodis(); pintaTaula(); pintaLlibre(); pintaVisuals();
 }
 
 // Escoltadors dels dos moments d'enfocament (sincronitzats via estat.projecte)
