@@ -173,9 +173,24 @@
         <div class="ajuda">Ex.: «Curs: Primer» → només s'analitzen aquests participants.</div>
       </div>
     </div>
+    <div class="fila">
+      <div style="flex:0 0 280px;">
+        <label>Tipus d'anàlisi</label>
+        <select id="p-mode">
+          <option value="global">Global — tot el corpus junt</option>
+          <option value="grups">Per grups — columna i anàlisi per grup</option>
+          <option value="comparativa">Comparativa — entre grups triats</option>
+        </select>
+        <div class="ajuda">Per a l'anàlisi individual d'un grup, tria'l a «Abast».</div>
+      </div>
+      <div id="fila-grups" style="display:none;">
+        <label>Grups a comparar (marca'n 2 o més)</label>
+        <div class="chips" id="chips-grups"></div>
+      </div>
+    </div>
     <label>Enfocament / instruccions per a l'anàlisi (opcional)</label>
-    <textarea id="p-instruccions" class="inp-instr" rows="2" placeholder="p. ex. Centra't en les barreres d'aprenentatge · compara sistemàticament entre cursos · fes una anàlisi global"></textarea>
-    <div class="ajuda">S'injecta a totes les fases (codificació, temes, informe) i a totes les anàlisis a aplicar. Ho pots canviar en qualsevol moment, aquí o a la pestanya 4.</div>
+    <textarea id="p-instruccions" class="inp-instr" rows="2" placeholder="p. ex. Compara Primer amb Quart · analitza per grups · anàlisi global centrada en les barreres"></textarea>
+    <div class="ajuda">S'injecta a totes les fases i anàlisis. Si hi escrius l'objectiu («compara Primer amb Quart», «per grups», «global»), l'app el detecta i configura el mode sola.</div>
   </div>
 
   <div style="text-align:center; margin:18px 0;">
@@ -572,9 +587,10 @@ function detectaEstructura(files){
   const perUnic = candidats.find(s=>s.unics >= s.plens*0.85);
   const colId = perNom ? perNom.i : (perUnic ? perUnic.i : null);
   const agrupa = colId!==null && stats[colId].unics < stats[colId].plens;
-  // Atributs de cas (Miles & Huberman; Gibbs Tabla 6.5): columnes categòriques curtes (p. ex. curs, gènere)
+  // Atributs de cas / GRUPS (Miles & Huberman; Gibbs Tabla 6.5): detecció genèrica de columnes categòriques
+  // (curs, gènere, centre, condició…): poques categories repetides, text curt, prou poblades.
   const colsAtribut = stats.filter(s=> s.i!==colId && !colsText.includes(s.i) && !s.esData &&
-    s.mitjana>0 && s.mitjana<35 && s.unics>=2 && s.unics<=12 && s.plens>=dades.length*0.5).map(s=>s.i);
+    s.mitjana>0 && s.mitjana<45 && s.unics>=2 && s.unics<=15 && s.plens>=dades.length*0.4).map(s=>s.i);
   return {caps, colsText, colId, colsAtribut, agrupa, nFiles:dades.length, ok:colsText.length>0};
 }
 
@@ -810,13 +826,37 @@ function clausClassificades(){
   return pool;
 }
 
-/* — Abast (filtre determinista per atribut) i instruccions de l'investigador — */
+/* — Grups, mode d'anàlisi (global · per grups · comparativa) i abast — */
+function grupAtribut(){ return estat.projecte.grupAtribut || atributsDisponibles()[0] || null; }
+function valorsGrup(atr){
+  return [...new Set(estat.docs.map(d=>(d.atributs||{})[atr]).filter(Boolean))].sort();
+}
 function docsActius(){
+  // La comparativa defineix el seu propi abast (els grups triats); si no, mana el filtre d'abast.
+  if((estat.projecte.mode||'global')==='comparativa' && (estat.projecte.grupsComparar||[]).length>=2 && grupAtribut()){
+    const atr = grupAtribut(), set = new Set(estat.projecte.grupsComparar);
+    const s = estat.docs.filter(d=>set.has((d.atributs||{})[atr]));
+    if(s.length) return s;
+  }
   const a = estat.projecte.abast || '';
   if(!a || a.indexOf('=')<0) return estat.docs;
   const [clau, valor] = a.split('=');
   const seleccio = estat.docs.filter(d=>(d.atributs||{})[clau]===valor);
   return seleccio.length ? seleccio : estat.docs;
+}
+/* Detecció de l'objectiu escrit en llenguatge natural: «compara Primer amb Quart», «per grups», «global» */
+function detectaModeNL(){
+  const txt = normalitza((estat.projecte.pregunta||'')+' '+(estat.projecte.instruccions||''));
+  if(!txt.trim()) return null;
+  const atr = grupAtribut();
+  const valors = atr ? valorsGrup(atr) : [];
+  const trobats = valors.filter(v=> txt.includes(normalitza(v)));
+  if(/compar/.test(txt) && trobats.length>=2) return {mode:'comparativa', grups:trobats};
+  if(/per grups|cada grup|tots els grups|columna per grup|entre grups|per cursos|entre cursos/.test(txt)) return {mode:'grups'};
+  if(/compar/.test(txt) && valors.length>=2 && !trobats.length) return {mode:'grups'};
+  if(/anal[il]si global|global/.test(txt) && !/compar/.test(txt)) return {mode:'global'};
+  if(trobats.length===1 && /nomes|unicament|centra/.test(txt)) return {mode:'global', abast: atr+'='+trobats[0]};
+  return null;
 }
 function instruccionsExtra(){
   const parts = [];
@@ -988,6 +1028,20 @@ async function executaAnalisi(){
   $('progres').style.display = ''; $('registre').textContent = '';
   const pregunta = estat.projecte.pregunta || '(anàlisi exploratòria, sense pregunta fixada)';
 
+  /* Objectiu escrit en llenguatge natural → mode (global · per grups · comparativa) */
+  const nl = detectaModeNL();
+  if(nl){
+    if(nl.mode) estat.projecte.mode = nl.mode;
+    if(nl.grups && nl.grups.length>=2) estat.projecte.grupsComparar = nl.grups;
+    if(nl.abast) estat.projecte.abast = nl.abast;
+    desa();
+    log('Objectiu detectat a les instruccions → mode '+estat.projecte.mode+
+        (estat.projecte.mode==='comparativa' && (estat.projecte.grupsComparar||[]).length>=2 ? ' ('+estat.projecte.grupsComparar.join(' vs ')+')' : '')+
+        (nl.abast? ' · abast '+nl.abast.replace('=',': ') : ''));
+  }
+  const modeExec = estat.projecte.mode || 'global';
+  log('Mode d\'anàlisi: '+(modeExec==='grups'? 'per grups (columna per grup)' : modeExec)+' · '+docsActius().length+' documents actius'+(grupAtribut()? ' · variable de grup: '+grupAtribut() : '')+'.');
+
   try{
     /* ── FASE 0: neteja de dades — primer APRÈN les regles, després les APLICA ── */
     pintaFases(0); barra(2);
@@ -1125,10 +1179,17 @@ Respon NOMÉS amb JSON: {"assignacions":{"etiqueta_codi":"nom_tema", ...}} (usa 
     log('Temes creats: '+nomsTemes.length+' · codis assignats: '+assignats+'/'+totsCodis.length);
     desa();
 
-    /* ── FASE C: taula participant × codi ── */
+    /* ── FASE C: taula participant × codi (+ taula per grups si el mode ho demana) ── */
     pintaFases(3); barra(82);
     generaTaula();
     log('Taula participant × codi generada.');
+    if(modeExec!=='global' && grupAtribut()){
+      try{
+        $('sel-atribut').value = grupAtribut();
+        $('btn-subgrups').click();
+        log('Taula per grups (una columna per grup, amb cita per cel·la) generada a la pestanya 6.');
+      }catch(e){}
+    }
 
     /* ── FASE D: informe ── */
     pintaFases(4); barra(86);
@@ -1140,6 +1201,24 @@ Respon NOMÉS amb JSON: {"assignacions":{"etiqueta_codi":"nom_tema", ...}} (usa 
         '- Codi '+et+' ('+c.tipus+', '+c.citacions.length+' cites): '+c.definicio+'\n'+c.citacions.slice(0,2).map(ci=>'  · «'+ci.text.replace(/\n/g,' ')+'» ('+ci.cas+', l. '+ci.linia+')').join('\n')
       ).join('\n');
     }).join('\n\n').slice(0,13000);
+    /* Evidència i normes per grup segons el mode (per grups · comparativa) */
+    let extraGrups = '', normaGrups = '';
+    if(modeExec!=='global' && grupAtribut()){
+      const atrA = grupAtribut();
+      const grupsInf = (modeExec==='comparativa' && (estat.projecte.grupsComparar||[]).length>=2) ? estat.projecte.grupsComparar : valorsGrup(atrA);
+      const docsDeG = {}; grupsInf.forEach(v=>{ docsDeG[v] = new Set(estat.docs.filter(d=>(d.atributs||{})[atrA]===v).map(d=>d.id)); });
+      extraGrups = '\n\nEVIDÈNCIA PER GRUP ('+atrA+'):\n'+temes.map(([nom])=>{
+        const fills = Object.entries(estat.codis).filter(([,c])=>c.pare===nom);
+        return '### '+nom+'\n'+grupsInf.map(v=>{
+          const parts = new Set(); let cita = null;
+          fills.forEach(([,c])=>(c.citacions||[]).forEach(ci=>{ if(ci.rev!=='no' && docsDeG[v].has(ci.cas)){ parts.add(ci.cas); if(!cita) cita = ci; } }));
+          return '- '+v+': '+parts.size+' participants'+(cita? ' · «'+cita.text.replace(/\n/g,' ').slice(0,130)+'» ('+cita.cas+', l. '+cita.linia+')' : ' · sense evidència en aquest grup');
+        }).join('\n');
+      }).join('\n').slice(0,6500);
+      normaGrups = modeExec==='comparativa'
+        ? '\n- MODE COMPARATIU ('+grupsInf.join(' vs ')+'): a cada tema compara explícitament els grups — semblances i diferències, amb almenys una cita de cada grup quan n\'hi hagi; si un grup no en parla, digues-ho (l\'absència és significativa). Acaba amb "## Síntesi comparativa": on divergeixen, on coincideixen, i quines explicacions rivals caldria descartar abans d\'atribuir les diferències al grup.'
+        : '\n- MODE PER GRUPS ('+grupsInf.join(', ')+'): a cada tema descriu breument la veu de cada grup amb la seva cita, i acaba amb "## Lectura transversal per grups" (patrons que travessen o distingeixen els grups).';
+    }
     estat.informe = await cridaLLM(
 `Ets un investigador qualitatiu que escriu en català acadèmic, natural i precís. Pregunta de recerca: ${pregunta}
 
@@ -1147,10 +1226,10 @@ Redacta un INFORME D'ANÀLISI QUALITATIVA en Markdown a partir EXCLUSIVAMENT del
 - Estructura: # títol · ## Introducció (3-4 frases: pregunta i corpus de ${docsActius().length} documents) · ## un apartat per tema (narra i interpreta, integra 2-3 cites literals en blockquote amb la referència (DOC, l. N)) · ## Conclusions (només qualitatiu, cap número ni percentatge) · ## Limitacions (3 frases).
 - Les cites, COPIA-LES EXACTAMENT del material; mai n'inventis ni en modifiquis cap.
 - Evita absoluts ("tots", "sempre", "mai"); usa "una part", "diversos participants".
-- No usis llenguatge inflat ni fórmules d'IA; escriu sobri i directe.
+- No usis llenguatge inflat ni fórmules d'IA; escriu sobri i directe.${normaGrups}
 
 MATERIAL:
-${cos}`, false);
+${cos}${extraGrups}`, false);
     barra(100); pintaFases(5);
     log('Informe redactat. Fet!');
     desa(); refresca();
@@ -2155,6 +2234,20 @@ function refresca(){
   });
   document.querySelectorAll('.sel-abast').forEach(s=>{ s.innerHTML = opcionsAbast.join(''); s.value = estat.projecte.abast||''; });
   document.querySelectorAll('.inp-instr').forEach(i=>{ i.value = estat.projecte.instruccions||''; });
+  // Mode d'anàlisi i grups per comparar
+  $('p-mode').value = estat.projecte.mode || 'global';
+  const atrG = grupAtribut();
+  $('fila-grups').style.display = ($('p-mode').value==='comparativa' && atrG) ? '' : 'none';
+  if(atrG){
+    const triats = new Set(estat.projecte.grupsComparar||[]);
+    $('chips-grups').innerHTML = valorsGrup(atrG).map(v=>'<span class="chip'+(triats.has(v)?' on':'')+'" data-v="'+esc(v)+'">'+esc(v)+' ('+estat.docs.filter(d=>(d.atributs||{})[atrG]===v).length+')</span>').join('');
+    $('chips-grups').querySelectorAll('.chip').forEach(ch=> ch.onclick = ()=>{
+      const t = new Set(estat.projecte.grupsComparar||[]);
+      t.has(ch.dataset.v) ? t.delete(ch.dataset.v) : t.add(ch.dataset.v);
+      estat.projecte.grupsComparar = [...t]; desa(); refresca();
+    });
+  }
+  $('p-mode').onchange = ()=>{ estat.projecte.mode = $('p-mode').value; desa(); refresca(); };
   $('llista-docs-mini').textContent = ultimResum || (estat.docs.length ? estat.docs.length+' documents carregats.' : '');
   $('llista-docs').innerHTML = estat.docs.length ? estat.docs.map(d=>
     `<div class="doc-item"><div><b>${esc(d.id)}</b> <span class="comptador">(${esc(d.nom)} · ${d.linies.length} línies)</span></div>

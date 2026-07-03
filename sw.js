@@ -1,5 +1,5 @@
 /* Service worker QDA-Gibbs MM-46 — network-first amb reserva de cau (offline-capable) */
-const CACHE = 'qda46-v3';
+const CACHE = 'qda46-v4';
 const SHELL = ['./QDA_Gibbs_Analitzador.html', './manifest.json', './icona-192.png', './icona-512.png'];
 
 self.addEventListener('install', e => {
