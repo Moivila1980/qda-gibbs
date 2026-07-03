@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e56a0">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icona-192.png">
+<title>MM-46 · QDA-Gibbs — Anàlisi qualitativa automàtica</title>
+<style>
+  :root{
+    --accent:#1e56a0; --accent-fosc:#0f3b6e; --accent-clar:#e8f0fa;
+    --tinta:#1f2937; --gris:#6b7280; --vora:#e5e7eb; --fons:#ffffff;
+    --ok:#15803d; --avis:#b45309; --mal:#b91c1c; --groc:#fef3c7;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI",system-ui,sans-serif; color:var(--tinta); background:var(--fons); font-size:14.5px; line-height:1.55;}
+  header{border-bottom:3px solid var(--accent); padding:14px 24px;}
+  header h1{font-size:19px; color:var(--accent-fosc); font-weight:600;}
+  header .sub{color:var(--gris); font-size:12.5px;}
+  nav{display:flex; gap:2px; padding:0 24px; border-bottom:1px solid var(--vora); background:#fafafa;}
+  nav button{border:none; background:none; padding:11px 18px; cursor:pointer; font-size:14px; color:var(--gris); border-bottom:3px solid transparent;}
+  nav button.actiu{color:var(--accent-fosc); border-bottom-color:var(--accent); font-weight:600;}
+  main{padding:22px 24px; max-width:1100px; margin:0 auto;}
+  .tab{display:none;} .tab.actiu{display:block;}
+  h2{font-size:16px; color:var(--accent-fosc); margin:18px 0 10px; font-weight:600;}
+  h2:first-child{margin-top:0;}
+  .caixa{border:1px solid var(--vora); border-radius:8px; padding:16px; margin-bottom:16px; background:#fff;}
+  .passos{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  .pas{flex:1; min-width:180px; border:1px solid var(--vora); border-radius:8px; padding:10px 14px; font-size:13px;}
+  .pas b{color:var(--accent-fosc); display:block; margin-bottom:2px;}
+  .drop{border:2px dashed var(--accent); border-radius:10px; padding:36px 20px; text-align:center; color:var(--accent-fosc); background:var(--accent-clar); cursor:pointer;}
+  .drop.sobre{background:#d3e3f6;}
+  .drop b{font-size:16px;}
+  .drop .fmts{color:var(--gris); font-size:13px; margin-top:6px;}
+  button.b{background:var(--accent); color:#fff; border:none; border-radius:6px; padding:8px 16px; font-size:13.5px; cursor:pointer;}
+  button.b:hover{background:var(--accent-fosc);}
+  button.b.gran{font-size:16px; padding:13px 26px; font-weight:600;}
+  button.b.sec{background:#fff; color:var(--accent-fosc); border:1px solid var(--accent);}
+  button.b.perill{background:#fff; color:var(--mal); border:1px solid var(--mal);}
+  button.b:disabled{opacity:.45; cursor:not-allowed;}
+  input[type=text], input[type=password], select, textarea{border:1px solid var(--vora); border-radius:6px; padding:7px 10px; font-size:13.5px; font-family:inherit; width:100%;}
+  label{font-size:12px; color:var(--gris); display:block; margin-bottom:3px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+  .ajuda{font-size:12.5px; color:var(--gris); margin-top:3px;}
+  .fila{display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+  .fila>div{flex:1; min-width:170px;}
+  table{border-collapse:collapse; width:100%; font-size:13px;}
+  th,td{border:1px solid var(--vora); padding:6px 9px; text-align:left; vertical-align:top;}
+  th{background:var(--accent-clar); color:var(--accent-fosc); font-weight:600;}
+  .pill{display:inline-block; border-radius:999px; padding:1px 9px; font-size:11.5px; font-weight:600;}
+  .pill.descriptiu{background:#f3f4f6; color:var(--gris);}
+  .pill.categoria{background:#fef3c7; color:var(--avis);}
+  .pill.analitic{background:#dcfce7; color:var(--ok);}
+  .cita-verbatim{background:var(--groc); padding:8px 10px; border-radius:6px; font-size:13px; margin:6px 0; white-space:pre-wrap;}
+  .nota{color:var(--gris); font-size:12.5px; margin-top:6px;}
+  .avis-vermell{color:var(--mal); font-weight:600;}
+  dialog{border:none; border-radius:10px; padding:0; max-width:820px; width:92vw; box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  dialog::backdrop{background:rgba(15,59,110,.35);}
+  .dlg-cos{padding:20px;}
+  .dlg-cap{background:var(--accent); color:#fff; padding:12px 20px; font-weight:600; border-radius:10px 10px 0 0;}
+  .prev-taula{max-height:200px; overflow:auto; border:1px solid var(--vora); border-radius:6px; margin:10px 0;}
+  .prev-taula table{font-size:12px;}
+  .chips{display:flex; gap:6px; flex-wrap:wrap;}
+  .chip{border:1px solid var(--vora); border-radius:999px; padding:4px 12px; font-size:12.5px; cursor:pointer; user-select:none;}
+  .chip.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .accions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .doc-item{display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px dashed var(--vora); gap:10px; font-size:13px;}
+  .buit{color:var(--gris); font-style:italic; padding:12px 0;}
+  .comptador{font-size:12px; color:var(--gris);}
+  /* progrés */
+  #progres{display:none;}
+  .barra{height:10px; background:var(--vora); border-radius:999px; overflow:hidden; margin:8px 0 14px;}
+  .barra>div{height:100%; background:var(--accent); width:0%; transition:width .4s;}
+  .fase-item{display:flex; gap:10px; align-items:baseline; padding:4px 0; font-size:13.5px;}
+  .fase-item .icona{min-width:20px; text-align:center;}
+  .fase-item.fet .icona{color:var(--ok);} .fase-item.enCurs .icona{color:var(--accent);}
+  #registre{font-family:Consolas,monospace; font-size:12px; color:var(--gris); max-height:180px; overflow-y:auto; background:#fafafa; border:1px solid var(--vora); border-radius:6px; padding:8px 10px; margin-top:10px; white-space:pre-wrap;}
+  /* informe */
+  #informe-cos{max-width:820px; line-height:1.7;}
+  .md-render{line-height:1.7;}
+  #informe-cos h1, .md-render h1{font-size:22px; color:var(--accent-fosc); margin:10px 0 14px;}
+  #informe-cos h2, .md-render h2{font-size:17px; margin:22px 0 8px;}
+  #informe-cos h3, .md-render h3{font-size:15px; color:var(--accent-fosc); margin:16px 0 6px;}
+  #informe-cos p, .md-render p{margin:8px 0;}
+  #informe-cos blockquote, .md-render blockquote{background:var(--groc); border-left:4px solid var(--avis); padding:8px 12px; margin:10px 0; border-radius:0 6px 6px 0; font-size:13.5px;}
+  #informe-cos ul, .md-render ul{margin:8px 0 8px 22px;}
+  details.plegable{border:1px solid var(--vora); border-radius:8px; padding:10px 14px; margin-bottom:16px;}
+  details.plegable summary{cursor:pointer; font-weight:600; color:var(--accent-fosc); font-size:14px;}
+  /* vincles cap a la font original */
+  .ref-font{color:var(--accent); cursor:pointer; border-bottom:1px dotted var(--accent); white-space:nowrap;}
+  .ref-font:hover{background:var(--accent-clar);}
+  #font-linies{max-height:62vh; overflow-y:auto; font-family:Consolas,monospace; font-size:12.5px; border:1px solid var(--vora); border-radius:6px; padding:8px 4px;}
+  #font-linies .fl{display:flex; gap:10px; padding:1px 6px; border-radius:3px;}
+  #font-linies .fl.dins{background:var(--groc); font-weight:600;}
+  #font-linies .fl .num{color:var(--gris); min-width:34px; text-align:right; user-select:none;}
+  .caixa-revisio{border:1px solid var(--avis); background:#fffbeb; border-radius:8px; padding:12px 14px; margin-top:10px;}
+  /* Panell d'enfocament: lletres blaves, vora grisa fosca, disseny fi i ampli */
+  .caixa-enfoc{border:1px solid #4b5563; border-radius:12px; padding:26px 28px; background:#fff;}
+  .caixa-enfoc label{color:var(--accent-fosc); font-weight:600; letter-spacing:.05em; margin-bottom:6px;}
+  .caixa-enfoc .ajuda{color:var(--accent); opacity:.7; margin-top:5px;}
+  .caixa-enfoc input, .caixa-enfoc textarea, .caixa-enfoc select{
+    color:var(--accent-fosc); border:1px solid #d1d5db; border-radius:8px; padding:10px 13px; background:#fff;
+  }
+  .caixa-enfoc input:focus, .caixa-enfoc textarea:focus, .caixa-enfoc select:focus{outline:none; border-color:var(--accent);}
+  .caixa-enfoc input::placeholder, .caixa-enfoc textarea::placeholder{color:#8aa6c9;}
+  .caixa-enfoc .fila{gap:20px; margin-bottom:18px;}
+</style>
+</head>
+<body>
+
+<header style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
+  <h1>MM-46 · QDA-Gibbs — Anàlisi qualitativa automàtica</h1>
+  <span class="sub">Puja el fitxer → l'app codifica, agrupa en temes i redacta l'informe. Cada afirmació queda ancorada a una cita literal del teu text (mai s'inventa res).</span>
+  <button class="b" id="btn-instal" style="margin-left:auto; display:none;">⤓ Instal·la l'app</button>
+  <button class="b sec" id="btn-config" style="margin-left:8px;">⚙ Configuració</button>
+</header>
+
+<nav id="nav">
+  <button data-tab="analitza" class="actiu">1 · Analitza</button>
+  <button data-tab="informe">2 · Informe</button>
+  <button data-tab="codis">3 · Temes i cites</button>
+  <button data-tab="llibre">4 · Anàlisis a aplicar</button>
+  <button data-tab="exporta">5 · Taula i exporta</button>
+</nav>
+
+<main>
+
+<!-- ══════════ 1 · ANALITZA ══════════ -->
+<section class="tab actiu" id="tab-analitza">
+
+  <div class="passos">
+    <div class="pas"><b>1. Puja</b>Excel, CSV o text amb les respostes o entrevistes.</div>
+    <div class="pas"><b>2. Comprova</b>L'app detecta participants i respostes i t'avisa quan tot és correcte.</div>
+    <div class="pas"><b>3. Analitza</b>Prems ▶ i codifica, agrupa en temes i redacta l'informe.</div>
+    <div class="pas"><b>4. Llegeix i exporta</b>Informe, temes, taula i Word/Excel; 🗑 Neteja per a un tema nou.</div>
+  </div>
+
+  <div class="caixa">
+    <div class="drop" id="drop">
+      <b>Arrossega el fitxer aquí o fes clic per triar-lo</b>
+      <div class="fmts">.xlsx · .xls · .csv · .tsv · .txt · .md — tot es processa al teu ordinador</div>
+    </div>
+    <input type="file" id="fitxers" multiple accept=".txt,.md,.csv,.tsv,.xlsx,.xls" style="display:none">
+    <div id="avis-ok" style="display:none; border:1px solid var(--ok); background:#f0fdf4; border-radius:8px; padding:12px 14px; margin-top:12px;">
+      <b style="color:var(--ok);">✓ Fitxer llegit correctament — tot a punt.</b>
+      <div id="llista-docs-mini" class="nota" style="margin-top:4px;"></div>
+      <div class="nota" style="margin-top:4px;">Revisa que els participants i les columnes siguin els esperats i prem <b>▶ Fes l'anàlisi completa</b> per iniciar el procés.</div>
+    </div>
+  </div>
+
+  <div class="caixa caixa-enfoc">
+    <div class="fila">
+      <div style="flex:2;">
+        <label>Pregunta de recerca (opcional però recomanat)</label>
+        <input type="text" id="cfg-pregunta" placeholder="p. ex. Com viuen els estudiants la fatiga durant el curs?">
+        <div class="ajuda">Orienta la codificació i l'informe. Buida = anàlisi exploratòria. Claus del motor: ⚙ Configuració.</div>
+      </div>
+      <div style="flex:0 0 240px;">
+        <label>Abast (filtre real de participants)</label>
+        <select id="p-abast" class="sel-abast"></select>
+        <div class="ajuda">Ex.: «Curs: Primer» → només s'analitzen aquests participants.</div>
+      </div>
+    </div>
+    <label>Enfocament / instruccions per a l'anàlisi (opcional)</label>
+    <textarea id="p-instruccions" class="inp-instr" rows="2" placeholder="p. ex. Centra't en les barreres d'aprenentatge · compara sistemàticament entre cursos · fes una anàlisi global"></textarea>
+    <div class="ajuda">S'injecta a totes les fases (codificació, temes, informe) i a totes les anàlisis a aplicar. Ho pots canviar en qualsevol moment, aquí o a la pestanya 4.</div>
+  </div>
+
+  <div style="text-align:center; margin:18px 0;">
+    <button class="b gran" id="btn-analitza">▶ Fes l'anàlisi completa</button>
+    <button class="b sec" id="btn-neteja-tot" style="margin-left:10px;">🗑 Neteja (fitxer i tema nou)</button>
+    <div class="nota" id="estat-boto"></div>
+  </div>
+
+  <div class="caixa" id="progres">
+    <h2>Anàlisi en curs…</h2>
+    <div class="barra"><div id="barra-int"></div></div>
+    <div id="fases-llista"></div>
+    <div id="registre"></div>
+  </div>
+
+  <details class="plegable">
+    <summary>Opcions avançades: documents carregats i anonimització</summary>
+    <h2>Documents del corpus <span class="comptador" id="compta-docs"></span></h2>
+    <div id="llista-docs"><div class="buit">Encara no hi ha documents.</div></div>
+    <h2>Anonimització (si el text conté noms reals)</h2>
+    <label>Escriu una línia per persona: nom real = pseudònim</label>
+    <textarea id="anon-mapa" rows="3" placeholder="Joan Marí = P-Alfa&#10;Hospital Son Espases = CENTRE-1"></textarea>
+    <div class="accions"><button class="b sec" id="btn-anon">Substitueix els noms al corpus</button></div>
+  </details>
+</section>
+
+<!-- ══════════ 2 · INFORME ══════════ -->
+<section class="tab" id="tab-informe">
+  <div class="accions" style="margin-bottom:14px;">
+    <button class="b" id="ex-informe-doc">Descarrega en Word</button>
+    <button class="b sec" id="ex-informe-md">Descarrega en Markdown</button>
+  </div>
+  <div class="caixa"><div id="informe-cos"><div class="buit">Encara no hi ha informe. Fes l'anàlisi a la pestanya 1.</div></div></div>
+</section>
+
+<!-- ══════════ 3 · TEMES I CITES ══════════ -->
+<section class="tab" id="tab-codis">
+  <div class="caixa">
+    <h2>Temes i codis trobats <span class="comptador" id="compta-codis"></span></h2>
+    <div class="nota" style="margin-bottom:10px;">Cada codi té la seva definició i les cites <b>literals</b> del teu text (participant + línia, clicable cap a la font). <b>Adjudicació humana</b> (Morgan, 2023; De Paoli, 2024): marca cada cita amb ✓ (l'acceptes) o ✗ (la rebutges — quedarà exclosa de la taula i dels exports). Tu ets l'àrbitre final; els agents només proposen.</div>
+    <div id="zona-codis"><div class="buit">Encara no hi ha codis.</div></div>
+  </div>
+</section>
+
+<!-- ══════════ 4 · ANÀLISIS DEL LLIBRE ══════════ -->
+<section class="tab" id="tab-llibre">
+  <div class="caixa" style="background:var(--accent-clar); border-color:var(--accent);">
+    <b>Més enllà de l'anàlisi descriptiva.</b> Gibbs adverteix que l'<i>error de principiant</i> és «aturar-se en la identificació de temes» (cap. 6). Aquest panell ofereix les anàlisis del llibre que van més enllà: tria'n una, llegeix què en diu l'autor i aplica-la directament sobre les dades ja carregades. Cada resultat queda ancorat a cites literals verificades.
+  </div>
+  <div class="caixa caixa-enfoc">
+    <div class="fila" style="margin-bottom:0;">
+      <div style="flex:2;">
+        <label>Enfocament per a les properes anàlisis (canvia'l entre anàlisi i anàlisi)</label>
+        <input type="text" id="l-instruccions" class="inp-instr" placeholder="p. ex. centra't només en primer curs · compara per cursos · anàlisi global">
+      </div>
+      <div style="flex:0 0 240px;">
+        <label>Abast</label>
+        <select id="l-abast" class="sel-abast"></select>
+      </div>
+    </div>
+  </div>
+  <div id="zona-llibre"></div>
+</section>
+
+<!-- ══════════ 5 · TAULA I EXPORTA ══════════ -->
+<section class="tab" id="tab-exporta">
+  <div class="caixa">
+    <h2>Taula participant × codi</h2>
+    <div class="nota">Cada cel·la mostra la cita del participant per a aquell codi. Serveix per comparar casos (Gibbs, cap. 6).</div>
+    <div class="accions">
+      <button class="b sec" id="btn-taula-csv">Descarrega la taula (CSV per a Excel)</button>
+    </div>
+    <div id="zona-taula" style="overflow-x:auto; margin-top:12px;"><div class="buit">Es genera automàticament amb l'anàlisi.</div></div>
+  </div>
+
+  <div class="caixa">
+    <h2>Comparació per subgrups (atributs de cas)</h2>
+    <div class="nota">Miles & Huberman (1994); Gibbs (Tabla 6.5): un atribut del cas (p. ex. el curs) permet comparar com apareix cada tema entre subgrups. Cel·les = participants del subgrup que expressen el tema + cita representativa clicable.</div>
+    <div class="fila" style="margin-top:10px;">
+      <div><label>Atribut</label><select id="sel-atribut"></select></div>
+      <div style="flex:0 0 auto; align-self:end;"><button class="b" id="btn-subgrups">Genera la comparació</button></div>
+      <div style="flex:0 0 auto; align-self:end;"><button class="b sec" id="btn-subgrups-csv" disabled>CSV (Excel)</button></div>
+    </div>
+    <div id="zona-subgrups" style="overflow-x:auto; margin-top:10px;"></div>
+  </div>
+
+  <div class="caixa">
+    <h2>Corba de saturació temàtica</h2>
+    <div class="nota"><b>Guest, Bunce & Johnson (2006)</b> i <b>Saunders et al. (2018)</b>: la saturació s'evidencia quan els participants nous deixen d'aportar codis nous. Aquesta corba mostra els codis nous que aporta cada participant (en l'ordre del corpus) i valora si la corba s'ha aplanat — l'argument empíric que demanen els revisors.</div>
+    <div class="accions"><button class="b" id="btn-saturacio">Calcula la saturació</button></div>
+    <div id="zona-saturacio" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="caixa">
+    <h2>Matriu de co-ocurrències codi × codi</h2>
+    <div class="nota"><b>Namey et al. (2008)</b> i la pràctica CAQDAS (Gibbs, cap. 8-9: cerca booleana AND): dos codis que co-ocorren en els mateixos participants suggereixen una relació a explorar (mai a afirmar sense tornar al text — la co-ocurrència no implica relació significativa).</div>
+    <div class="accions"><button class="b" id="btn-coocurrencia">Genera la matriu (12 codis principals)</button></div>
+    <div id="zona-coocurrencia" style="overflow-x:auto; margin-top:10px;"></div>
+  </div>
+
+  <div class="caixa">
+    <h2>Altres descàrregues</h2>
+    <div class="accions">
+      <button class="b" id="ex-codebook-csv">Codis i cites (CSV per a Excel)</button>
+      <button class="b sec" id="ex-codebook">codebook.json (per a la skill)</button>
+      <button class="b sec" id="ex-projecte">projecte.json (per a la skill)</button>
+      <button class="b sec" id="ex-trans">Transcripcions numerades (.txt)</button>
+    </div>
+    <div class="nota">Els .json i les transcripcions són compatibles amb els scripts de MiniMoi-46 per fer l'auditoria completa amb <code>qda-gibbs</code> a Claude Code.</div>
+  </div>
+
+  <div class="caixa">
+    <h2>Sessió de treball</h2>
+    <div class="accions">
+      <button class="b sec" id="ex-paquet">Desa-ho tot en un fitxer (.json)</button>
+      <button class="b sec" id="im-paquet">Recupera un fitxer desat</button>
+      <button class="b perill" id="btn-esborra">Comença de zero</button>
+    </div>
+    <input type="file" id="fitxer-paquet" accept=".json" style="display:none">
+    <div class="nota">El projecte també queda desat automàticament en aquest navegador.</div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════ MODAL MAPEIG CSV/EXCEL ══════════ -->
+<dialog id="dlg-mapa">
+  <div class="dlg-cap" id="dlg-titol">Com hem de llegir aquest fitxer?</div>
+  <div class="dlg-cos">
+    <div class="fila" id="fila-full" style="display:none;"><div><label>Full de càlcul</label><select id="map-full"></select></div></div>
+    <div class="prev-taula" id="map-preview"></div>
+    <div class="fila">
+      <div>
+        <label>Quina columna identifica el participant?</label>
+        <select id="map-id"><option value="">cap — numera automàticament (P1, P2…)</option></select>
+      </div>
+      <div>
+        <label>Files repetides del mateix participant</label>
+        <select id="map-agrupa"><option value="si">ajunta-les en un sol document</option><option value="no">cada fila per separat</option></select>
+      </div>
+    </div>
+    <label>Quines columnes contenen el text a analitzar? (les marcades en blau)</label>
+    <div class="chips" id="map-cols"></div>
+    <div class="ajuda">L'app preselecciona les columnes amb respostes llargues. Fes clic per marcar o desmarcar.</div>
+    <div class="accions">
+      <button class="b" id="map-ok">Continua</button>
+      <button class="b sec" id="map-cancel">Cancel·la</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ══════════ CONFIGURACIÓ (panell superior dret) ══════════ -->
+<dialog id="dlg-config">
+  <div class="dlg-cap">⚙ Configuració del motor d'anàlisi</div>
+  <div class="dlg-cos">
+    <div id="config-benvinguda" style="display:none; border:1px solid var(--accent); background:var(--accent-clar); border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:13.5px;">
+      <b>Benvingut/da!</b> Per analitzar necessites una clau API pròpia (DeepSeek, OpenRouter o Gemini): <b>cada usuari fa servir la seva</b> i paga només el seu consum. L'app no porta cap clau incorporada i la teva es desa únicament en aquest navegador — mai s'envia enlloc més que al proveïdor del model que triïs.
+    </div>
+    <div class="fila">
+      <div>
+        <label>Clau API DeepSeek o OpenRouter</label>
+        <input type="password" id="cfg-deepseek" placeholder="sk-… (DeepSeek) o sk-or-… (OpenRouter)">
+        <div class="ajuda">Val qualsevol de les dues: l'app les distingeix pel prefix. Es desa només en aquest navegador.</div>
+      </div>
+      <div>
+        <label>Clau API Gemini (Google)</label>
+        <input type="password" id="cfg-gemini" placeholder="AIza...">
+        <div class="ajuda">Si un motor falla, l'app prova l'altre automàticament.</div>
+      </div>
+    </div>
+    <div class="fila">
+      <div>
+        <label>Motor preferit</label>
+        <select id="cfg-proveidor">
+          <option value="deepseek">DeepSeek (més precís)</option>
+          <option value="gemini">Gemini (més ràpid)</option>
+        </select>
+      </div>
+      <div>
+        <label>En pujar un fitxer…</label>
+        <select id="cfg-auto">
+          <option value="si">analitza automàticament</option>
+          <option value="no">espera que premi el botó</option>
+        </select>
+      </div>
+    </div>
+    <div class="nota">L'app recorda l'última clau que ha funcionat de cada motor: si un dia n'enganxes una d'equivocada, es recupera sola.</div>
+    <div class="accions"><button class="b" onclick="document.getElementById('dlg-config').close()">Desa i tanca</button></div>
+  </div>
+</dialog>
+
+<!-- ══════════ VISOR DE FONT ORIGINAL (clic a una cita → línies en groc) ══════════ -->
+<dialog id="dlg-font">
+  <div class="dlg-cap" id="font-titol">Font original</div>
+  <div class="dlg-cos">
+    <div id="font-linies"></div>
+    <div class="accions"><button class="b sec" onclick="document.getElementById('dlg-font').close()">Tanca</button></div>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+/* ─────────────────────────── ESTAT ─────────────────────────── */
+const CLAU_LS = 'qda46_analitzador';
+const CLAU_CFG = 'qda46_config';
+let estat = {
+  projecte:{nom:'', pregunta:'', proposit:'', enfocament:'mixt'},
+  docs:[],            // {id, nom, origen, linies:[...]}
+  codis:{},           // etiqueta -> {tipus, pare, definicio, data, citacions:[{text,cas,linia}]}
+  informe:'',
+  analisis:{},        // clau -> {titol, md, csv, data} (panell "Anàlisis del llibre")
+  descartades:0,
+  taulaFeta:false
+};
+let cfg = {deepseek:'', gemini:'', proveidor:'deepseek', auto:'no'};
+let analitzant = false;
+
+const $ = id => document.getElementById(id);
+const avui = () => new Date().toISOString().slice(0,10);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function desa(){ try{ localStorage.setItem(CLAU_LS, JSON.stringify(estat)); }catch(e){} }
+function desaCfg(){ try{ localStorage.setItem(CLAU_CFG, JSON.stringify(cfg)); }catch(e){} }
+function carrega(){
+  try{ const j = localStorage.getItem(CLAU_LS); if(j) estat = Object.assign(estat, JSON.parse(j)); }catch(e){}
+  try{ const j = localStorage.getItem(CLAU_CFG); if(j) cfg = Object.assign(cfg, JSON.parse(j)); }catch(e){}
+}
+
+/* ─────────────────────────── NAVEGACIÓ ─────────────────────────── */
+function vesA(tab){
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('actiu', x.dataset.tab===tab));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('actiu'));
+  $('tab-'+tab).classList.add('actiu');
+  refresca();
+}
+document.querySelectorAll('#nav button').forEach(b=> b.onclick = ()=> vesA(b.dataset.tab));
+
+/* ─────────────────────────── CONFIG ─────────────────────────── */
+['cfg-deepseek','cfg-gemini','cfg-proveidor','cfg-pregunta','cfg-auto'].forEach(id=>{
+  $(id).addEventListener('input', ()=>{
+    cfg.deepseek = $('cfg-deepseek').value.trim();
+    cfg.gemini = $('cfg-gemini').value.trim();
+    cfg.proveidor = $('cfg-proveidor').value;
+    cfg.auto = $('cfg-auto').value;
+    estat.projecte.pregunta = $('cfg-pregunta').value.trim();
+    desaCfg(); desa(); refrescaBoto();
+  });
+});
+
+function teClau(){ const p = clausClassificades(); return !!(p.deepseek || p.openrouter || p.gemini); }
+$('btn-config').onclick = ()=> $('dlg-config').showModal();
+function refrescaBoto(){
+  $('btn-analitza').disabled = analitzant || !estat.docs.length || !teClau();
+  $('estat-boto').innerHTML = analitzant ? 'Anàlisi en marxa…'
+    : !estat.docs.length ? 'Primer puja un fitxer.'
+    : !teClau() ? '<span class="avis-vermell">Falta una clau API: obre ⚙ Configuració (a dalt a la dreta).</span>'
+    : '✓ ' + estat.docs.length + ' documents a punt. Prem el botó per iniciar l\'anàlisi.';
+}
+
+/* ─────────────────────────── PUJADA DE FITXERS ─────────────────────────── */
+const drop = $('drop'), inputF = $('fitxers');
+drop.onclick = ()=> inputF.click();
+drop.ondragover = e=>{ e.preventDefault(); drop.classList.add('sobre'); };
+drop.ondragleave = ()=> drop.classList.remove('sobre');
+drop.ondrop = e=>{ e.preventDefault(); drop.classList.remove('sobre'); processaFitxers(e.dataTransfer.files); };
+inputF.onchange = ()=>{ processaFitxers(inputF.files); inputF.value=''; };
+
+async function processaFitxers(fitxers){
+  let nousDocs = false;
+  for(const f of fitxers){
+    const ext = f.name.split('.').pop().toLowerCase();
+    try{
+      if(ext==='txt' || ext==='md'){
+        afegeixDocText(f.name, await f.text()); nousDocs = true;
+      }else if(ext==='csv' || ext==='tsv'){
+        const files = analitzaCSV(await f.text(), ext==='tsv' ? '\t' : null);
+        if(await importaAuto(f.name, {'(únic)': files})) nousDocs = true;
+      }else if(ext==='xlsx' || ext==='xls'){
+        await assegAraXLSX();
+        const wb = XLSX.read(await f.arrayBuffer(), {type:'array'});
+        const fulls = {};
+        wb.SheetNames.forEach(n=>{
+          const files = XLSX.utils.sheet_to_json(wb.Sheets[n], {header:1, defval:''});
+          if(files.length > 1) fulls[n] = files.map(r=>r.map(c=>String(c)));
+        });
+        if(!Object.keys(fulls).length){ alert(f.name+': el llibre és buit.'); continue; }
+        if(await importaAuto(f.name, fulls)) nousDocs = true;
+      }else{
+        alert('Format no suportat: '+f.name+'\nUsa .xlsx, .xls, .csv, .tsv, .txt o .md.');
+      }
+    }catch(err){
+      alert('Error amb '+f.name+': '+err.message);
+    }
+  }
+  desa(); refresca();
+  if(nousDocs && cfg.auto==='si' && teClau() && !analitzant) executaAnalisi();
+}
+
+function assegAraXLSX(){
+  return new Promise((res, rej)=>{
+    if(window.XLSX) return res();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
+    s.onload = ()=>res();
+    s.onerror = ()=>rej(new Error('No s\'ha pogut carregar el lector d\'Excel (cal connexió el primer cop). Desa el full com a CSV i torna-ho a provar.'));
+    document.head.appendChild(s);
+  });
+}
+
+/* CSV robust: detecta separador (; , \t) i respecta cometes. */
+function analitzaCSV(text, sepForcat){
+  text = text.replace(/^﻿/, '');
+  const primera = text.split(/\r?\n/)[0] || '';
+  let sep = sepForcat;
+  if(!sep){
+    const compta = c => (primera.match(new RegExp('\\'+c,'g'))||[]).length;
+    sep = compta(';') >= compta(',') ? (compta(';')? ';' : ',') : ',';
+    if(compta('\t') > Math.max(compta(';'), compta(','))) sep = '\t';
+  }
+  const files = []; let fila = [], camp = '', dins = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(dins){
+      if(c==='"'){ if(text[i+1]==='"'){ camp+='"'; i++; } else dins=false; }
+      else camp += c;
+    }else{
+      if(c==='"') dins = true;
+      else if(c===sep){ fila.push(camp); camp=''; }
+      else if(c==='\n' || c==='\r'){
+        if(c==='\r' && text[i+1]==='\n') i++;
+        fila.push(camp); camp='';
+        if(fila.some(x=>x.trim()!=='')) files.push(fila);
+        fila = [];
+      }
+      else camp += c;
+    }
+  }
+  fila.push(camp);
+  if(fila.some(x=>x.trim()!=='')) files.push(fila);
+  return files;
+}
+
+/* ─────────────────────── DETECCIÓ AUTOMÀTICA D'ESTRUCTURA ─────────────────────── */
+function detectaEstructura(files){
+  const caps = files[0].map((c,i)=> String(c).trim() || 'Columna '+(i+1));
+  const dades = files.slice(1);
+  const semblaData = v => /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/.test(v);
+  const stats = caps.map((cap,i)=>{
+    const noBuits = dades.map(r=>String(r[i]||'').trim()).filter(v=>v);
+    const mitjana = noBuits.reduce((a,b)=>a+b.length,0)/(noBuits.length||1);
+    const maxim = noBuits.reduce((a,b)=>Math.max(a,b.length),0);
+    const esData = /marca temporal|timestamp|^data\b|^fecha|^date|^hora/i.test(cap) ||
+                   (noBuits.length && noBuits.filter(semblaData).length > noBuits.length*0.5);
+    return {i, cap, mitjana, maxim, esData, plens:noBuits.length, unics:new Set(noBuits).size};
+  });
+  // Text qualitatiu: mitjana llarga, o alguna resposta llarga encara que moltes siguin curtes ("Cap")
+  let colsText = stats.filter(s=>!s.esData && s.plens>=Math.max(1, dades.length*0.3) &&
+                                 (s.mitjana>50 || (s.maxim>120 && s.mitjana>8))).map(s=>s.i);
+  if(!colsText.length){
+    const millor = stats.filter(s=>!s.esData).sort((a,b)=>b.mitjana-a.mitjana)[0];
+    if(millor && millor.mitjana>25) colsText = [millor.i];
+  }
+  // ID: curta, ben poblada, mai una data; cal capçalera d'identificador O valors gairebé tots únics
+  const candidats = stats.filter(s=>!colsText.includes(s.i) && !s.esData && s.mitjana>0 && s.mitjana<30 && s.plens>=dades.length*0.7);
+  const perNom = candidats.find(s=>/\b(id|codi|cas|particip|subjecte|alumn|estudiant|nom|pseud|entrevist)/i.test(s.cap));
+  const perUnic = candidats.find(s=>s.unics >= s.plens*0.85);
+  const colId = perNom ? perNom.i : (perUnic ? perUnic.i : null);
+  const agrupa = colId!==null && stats[colId].unics < stats[colId].plens;
+  // Atributs de cas (Miles & Huberman; Gibbs Tabla 6.5): columnes categòriques curtes (p. ex. curs, gènere)
+  const colsAtribut = stats.filter(s=> s.i!==colId && !colsText.includes(s.i) && !s.esData &&
+    s.mitjana>0 && s.mitjana<35 && s.unics>=2 && s.unics<=12 && s.plens>=dades.length*0.5).map(s=>s.i);
+  return {caps, colsText, colId, colsAtribut, agrupa, nFiles:dades.length, ok:colsText.length>0};
+}
+
+function importaFiles(nomFitxer, files, det){
+  const grups = new Map();
+  files.slice(1).forEach((r,ix)=>{
+    const clau = det.agrupa ? (r[det.colId]||'').trim() || 'sense_id'
+               : det.colId !== null ? ((r[det.colId]||'').trim() || 'fila'+(ix+2))
+               : 'P' + (ix+1);
+    if(!grups.has(clau)) grups.set(clau, []);
+    grups.get(clau).push(r);
+  });
+  let afegits = 0;
+  grups.forEach((filesGrup, clau)=>{
+    const linies = [];
+    const atributs = {};
+    filesGrup.forEach(r=>{
+      (det.colsAtribut||[]).forEach(ci=>{
+        const val = String(r[ci]||'').trim();
+        if(val && !atributs[det.caps[ci]]) atributs[det.caps[ci]] = val;
+      });
+      det.colsText.forEach(ci=>{
+        const val = String(r[ci]||'').trim();
+        if(!val) return;
+        if(det.colsText.length > 1) linies.push('[' + det.caps[ci].toUpperCase() + ']');
+        val.split(/\r?\n/).forEach(l=>{ if(l.trim()) linies.push(l.trim()); });
+      });
+    });
+    if(linies.length){ afegeixDoc(idNet(clau), nomFitxer, 'taula', linies, atributs); afegits++; }
+  });
+  return afegits;
+}
+
+/* Tria sol el millor full i les millors columnes; obre el modal NOMÉS si no ho pot deduir. */
+async function importaAuto(nomFitxer, fulls){
+  let millor = null;
+  Object.entries(fulls).forEach(([nomFull, files])=>{
+    if(files.length < 2) return;
+    const det = detectaEstructura(files);
+    if(!det.ok) return;
+    const puntuacio = det.colsText.reduce((tot, ci)=>
+      tot + files.slice(1).reduce((a,r)=>a+String(r[ci]||'').length, 0), 0);
+    if(!millor || puntuacio > millor.puntuacio) millor = {nomFull, files, det, puntuacio};
+  });
+  if(!millor){
+    // Cap full amb text clar: pregunta el mínim imprescindible amb el modal
+    return await obreMapeig(nomFitxer, fulls);
+  }
+  // Evita duplicats: si el mateix fitxer ja era pujat, substitueix (no acumulis)
+  const jaHi = estat.docs.filter(d=>d.nom===nomFitxer).length;
+  if(jaHi){
+    if(!confirm('«'+nomFitxer+'» ja estava pujat ('+jaHi+' documents). Vols substituir-los per aquesta versió?\n\n(Cancel·la per no tornar-lo a pujar.)')) return false;
+    estat.docs = estat.docs.filter(d=>d.nom!==nomFitxer);
+  }
+  const {det} = millor;
+  const afegits = importaFiles(nomFitxer, millor.files, det);
+  const resum = 'He organitzat «'+nomFitxer+'» sol: '
+    + (Object.keys(fulls).length>1 ? 'full «'+millor.nomFull+'», ' : '')
+    + (det.colId!==null ? 'participant = «'+det.caps[det.colId]+'»' : 'participants numerats P1, P2…')
+    + ' · text = ' + det.colsText.map(i=>'«'+det.caps[i]+'»').join(', ')
+    + (det.agrupa ? ' · files del mateix participant ajuntades' : '')
+    + ((det.colsAtribut||[]).length ? ' · atributs de cas: ' + det.colsAtribut.map(i=>'«'+det.caps[i]+'»').join(', ') : '')
+    + ' → ' + afegits + ' documents.';
+  ultimResum = resum;
+  return afegits > 0;
+}
+let ultimResum = '';
+
+/* ─────────────────────────── MODAL DE MAPEIG (últim recurs) ─────────────────────────── */
+let mapCtx = null;
+function obreMapeig(nomFitxer, fulls){
+  return new Promise(resol=>{
+    mapCtx = {nomFitxer, fulls, resol};
+    $('dlg-titol').textContent = 'Com hem de llegir «'+nomFitxer+'»?';
+    const noms = Object.keys(fulls);
+    $('fila-full').style.display = noms.length>1 ? '' : 'none';
+    $('map-full').innerHTML = noms.map(n=>`<option>${esc(n)}</option>`).join('');
+    pintaMapeig();
+    $('dlg-mapa').showModal();
+  });
+}
+$('map-full').onchange = pintaMapeig;
+function fullActual(){ return mapCtx.fulls[$('map-full').value || Object.keys(mapCtx.fulls)[0]]; }
+
+function pintaMapeig(){
+  const files = fullActual();
+  const caps = files[0].map((c,i)=> c.trim() || 'Columna '+(i+1));
+  $('map-preview').innerHTML = '<table><tr>'+caps.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr>'+
+    files.slice(1,6).map(r=>'<tr>'+caps.map((_,i)=>`<td>${esc((r[i]||'').slice(0,60))}</td>`).join('')+'</tr>').join('')+'</table>';
+  $('map-id').innerHTML = '<option value="">cap — numera automàticament (P1, P2…)</option>'+
+    caps.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('');
+  $('map-cols').innerHTML = caps.map((c,i)=>`<span class="chip" data-i="${i}">${esc(c)}</span>`).join('');
+  caps.forEach((_,i)=>{
+    const llargs = files.slice(1,20).map(r=>(r[i]||'').length);
+    const mitjana = llargs.reduce((a,b)=>a+b,0)/(llargs.length||1);
+    if(mitjana > 60) $('map-cols').children[i].classList.add('on');
+  });
+  document.querySelectorAll('#map-cols .chip').forEach(ch=> ch.onclick = ()=> ch.classList.toggle('on'));
+}
+
+$('map-cancel').onclick = ()=>{ $('dlg-mapa').close(); mapCtx.resol(false); };
+$('map-ok').onclick = ()=>{
+  const files = fullActual();
+  const caps = files[0].map((c,i)=> c.trim() || 'Columna '+(i+1));
+  const colsText = [...document.querySelectorAll('#map-cols .chip.on')].map(ch=>+ch.dataset.i);
+  if(!colsText.length){ alert('Marca almenys una columna de text (clic sobre el nom).'); return; }
+  const colId = $('map-id').value === '' ? null : +$('map-id').value;
+  const agrupa = $('map-agrupa').value === 'si' && colId !== null;
+
+  const grups = new Map();
+  files.slice(1).forEach((r,ix)=>{
+    const clau = agrupa ? (r[colId]||'').trim() || 'sense_id'
+               : colId !== null ? ((r[colId]||'').trim() || 'fila'+(ix+2)) + '·f' + (ix+2)
+               : 'P' + (ix+1);
+    if(!grups.has(clau)) grups.set(clau, []);
+    grups.get(clau).push(r);
+  });
+
+  grups.forEach((filesGrup, clau)=>{
+    const linies = [];
+    filesGrup.forEach(r=>{
+      colsText.forEach(ci=>{
+        const val = (r[ci]||'').trim();
+        if(!val) return;
+        if(colsText.length > 1) linies.push('[' + caps[ci].toUpperCase() + ']');
+        val.split(/\r?\n/).forEach(l=>{ if(l.trim()) linies.push(l.trim()); });
+      });
+    });
+    if(linies.length) afegeixDoc(idNet(clau), mapCtx.nomFitxer, 'taula', linies);
+  });
+
+  $('dlg-mapa').close(); mapCtx.resol(true);
+  desa(); refresca();
+};
+
+/* ─────────────────────────── DOCUMENTS ─────────────────────────── */
+function idNet(s){
+  s = String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,48);
+  return s || 'DOC';
+}
+function idUnic(base){
+  let id = base, n = 2;
+  while(estat.docs.some(d=>d.id===id)) id = base + '-' + (n++);
+  return id;
+}
+function afegeixDocText(nom, text){
+  const linies = text.replace(/^﻿/,'').split(/\r?\n/).map(l=>l.replace(/^\d+\s/,'')).filter(l=>l.trim()!=='');
+  const base = idNet(nom.replace(/\.[^.]+$/, '')) || 'P' + (estat.docs.length+1);
+  afegeixDoc(base, nom, 'text', linies);
+}
+function afegeixDoc(baseId, nomFitxer, origen, linies, atributs){
+  estat.docs.push({id:idUnic(baseId), nom:nomFitxer, origen, linies, atributs: atributs||{}});
+  estat.taulaFeta = false;
+}
+function eliminaDoc(id){
+  if(!confirm('Eliminar el document '+id+'?')) return;
+  estat.docs = estat.docs.filter(d=>d.id!==id);
+  desa(); refresca();
+}
+
+/* ─────────────────────────── ANONIMITZACIÓ ─────────────────────────── */
+$('btn-anon').onclick = ()=>{
+  const parelles = $('anon-mapa').value.split(/\r?\n/)
+    .map(l=>l.split('=').map(x=>x.trim())).filter(p=>p.length===2 && p[0] && p[1]);
+  if(!parelles.length){ alert('Escriu una línia per persona amb el format:\nnom real = pseudònim'); return; }
+  let canvis = 0;
+  estat.docs.forEach(d=>{
+    d.linies = d.linies.map(l=>{
+      parelles.forEach(([real, pseu])=>{
+        const abans = l;
+        l = l.split(real).join(pseu).split(real.toUpperCase()).join(pseu.toUpperCase());
+        if(l!==abans) canvis++;
+      });
+      return l;
+    });
+  });
+  desa(); refresca();
+  alert('Fet: '+canvis+' substitucions al corpus.');
+};
+
+/* ═══════════════════════════ MOTOR D'ANÀLISI AUTOMÀTICA ═══════════════════════════ */
+const FASES = ['Neteja i preparació de les dades (primer aprèn què cal, després ho aplica)', 'Codificació oberta (llegir i codificar tot el corpus)', 'Agrupació en temes', 'Taula participant × codi', 'Redacció de l\'informe'];
+
+function log(msg){
+  const r = $('registre');
+  r.textContent += msg + '\n';
+  r.scrollTop = r.scrollHeight;
+}
+function pintaFases(actual, detall){
+  $('fases-llista').innerHTML = FASES.map((f,i)=>{
+    const cls = i<actual ? 'fet' : i===actual ? 'enCurs' : '';
+    const ico = i<actual ? '✓' : i===actual ? '⟳' : '·';
+    const d = i===actual && detall ? ' <span class="comptador">'+esc(detall)+'</span>' : '';
+    return `<div class="fase-item ${cls}"><span class="icona">${ico}</span><span>${f}${d}</span></div>`;
+  }).join('');
+}
+function barra(pct){ $('barra-int').style.width = Math.round(pct)+'%'; }
+
+/* — Classificació de claus pel prefix: és igual a quin camp s'enganxin — */
+function poolRecordat(){ try{ return JSON.parse(localStorage.getItem('qda46_pool'))||{}; }catch(e){ return {}; } }
+function recordaClau(prov, clau){ const p = poolRecordat(); if(p[prov]!==clau){ p[prov]=clau; try{ localStorage.setItem('qda46_pool', JSON.stringify(p)); }catch(e){} } }
+function clausClassificades(){
+  const pool = {deepseek:null, openrouter:null, gemini:null};
+  [cfg.deepseek, cfg.gemini].map(s=>(s||'').trim()).filter(Boolean).forEach(k=>{
+    if(/^AIza/.test(k)) pool.gemini = pool.gemini || k;
+    else if(/^sk-or-/.test(k)) pool.openrouter = pool.openrouter || k;
+    else pool.deepseek = pool.deepseek || k;
+  });
+  // Autoguariment: si falta un proveïdor, usa l'última clau seva que va funcionar
+  const rec = poolRecordat();
+  ['deepseek','openrouter','gemini'].forEach(p=>{ if(!pool[p] && rec[p]) pool[p] = rec[p]; });
+  return pool;
+}
+
+/* — Abast (filtre determinista per atribut) i instruccions de l'investigador — */
+function docsActius(){
+  const a = estat.projecte.abast || '';
+  if(!a || a.indexOf('=')<0) return estat.docs;
+  const [clau, valor] = a.split('=');
+  const seleccio = estat.docs.filter(d=>(d.atributs||{})[clau]===valor);
+  return seleccio.length ? seleccio : estat.docs;
+}
+function instruccionsExtra(){
+  const parts = [];
+  if(estat.projecte.instruccions) parts.push('[INSTRUCCIONS DE L\'INVESTIGADOR — segueix-les de manera prioritària]: '+estat.projecte.instruccions);
+  if(estat.projecte.abast && estat.projecte.abast.indexOf('=')>=0) parts.push('[ABAST]: aquesta anàlisi cobreix només els participants amb '+estat.projecte.abast.replace('=',' = ')+'; no generalitzis més enllà d\'aquest subgrup.');
+  return parts.length ? '\n\n'+parts.join('\n') : '';
+}
+
+/* — Crida LLM amb reintents i canvi de proveïdor — */
+async function cridaLLM(prompt, esJson){
+  prompt += instruccionsExtra();
+  const pool = window.__clausRun || clausClassificades();
+  const ordre = cfg.proveidor==='gemini' ? ['gemini','deepseek','openrouter'] : ['deepseek','openrouter','gemini'];
+  let ultimError = null;
+  for(const prov of ordre){
+    const clau = pool[prov];
+    if(!clau) continue;
+    for(let intent=1; intent<=2; intent++){
+      try{ const r = await cridaProveidor(prov, clau, prompt, esJson); recordaClau(prov, clau); return r; }
+      catch(e){
+        ultimError = e;
+        log('  ⚠ '+prov+' (intent '+intent+'): '+e.message.slice(0,120));
+        if(/40[13]/.test(e.message)) break; // clau dolenta: no reintentar
+        await new Promise(r=>setTimeout(r, 2500*intent)); // respir per a límits de quota (429)
+      }
+    }
+  }
+  throw ultimError || new Error('Cap proveïdor disponible.');
+}
+
+async function cridaProveidor(prov, clau, prompt, esJson){
+  let resp, dades;
+  if(prov==='deepseek' || prov==='openrouter'){
+    const esOR = prov==='openrouter' || /^sk-or-/.test(clau);
+    resp = await fetch(esOR ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.deepseek.com/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+clau},
+      body: JSON.stringify({
+        model: esOR ? 'deepseek/deepseek-chat' : 'deepseek-chat',
+        messages:[{role:'user', content:prompt}],
+        temperature:0.2, max_tokens:8000,
+        ...(esJson ? {response_format:{type:'json_object'}} : {})
+      })
+    });
+    if(!resp.ok) throw new Error((esOR?'OpenRouter':'DeepSeek')+' HTTP '+resp.status+' '+(await resp.text()).slice(0,200));
+    dades = await resp.json();
+    return netejaJSON(dades.choices[0].message.content, esJson);
+  }else{
+    const model = 'gemini-2.5-flash';
+    resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(clau), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{parts:[{text:prompt}]}],
+        generationConfig:{temperature:0.2, maxOutputTokens:8192, ...(esJson ? {responseMimeType:'application/json'} : {})}
+      })
+    });
+    if(!resp.ok) throw new Error('Gemini HTTP '+resp.status+' '+(await resp.text()).slice(0,200));
+    dades = await resp.json();
+    const text = dades.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
+    if(!text) throw new Error('Gemini: resposta buida ('+JSON.stringify(dades).slice(0,150)+')');
+    return netejaJSON(text, esJson);
+  }
+}
+
+function netejaJSON(text, esJson){
+  if(!esJson) return text;
+  let t = text.trim().replace(/^```(json)?/i,'').replace(/```$/,'').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if(a>=0 && b>a) t = t.slice(a, b+1);
+  try{ return JSON.parse(t); }
+  catch(err){
+    // Rescat de JSON truncat: retalla fins a l'últim objecte complet i equilibra claudàtors.
+    let i = t.length;
+    for(let intents=0; intents<200; intents++){
+      i = t.lastIndexOf('}', i-1);
+      if(i < 50) break;
+      const cand = t.slice(0, i+1);
+      const eq = cand + ']'.repeat(Math.max(0,(cand.match(/\[/g)||[]).length-(cand.match(/\]/g)||[]).length))
+                      + '}'.repeat(Math.max(0,(cand.match(/\{/g)||[]).length-(cand.match(/\}/g)||[]).length));
+      try{ return JSON.parse(eq); }catch(_){}
+    }
+    throw err;
+  }
+}
+
+/* — Reparació de text mal descodificat (UTF-8 llegit com a cp1252: "rÃºbriques" → "rúbriques") — */
+const CP1252_INV = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
+function reparaMojibake(s){
+  if(!(/[ÃÂ]|â€/.test(s))) return s;
+  try{
+    const bytes = [];
+    for(const c of s){ const cp = c.codePointAt(0); bytes.push(cp<=0xFF ? cp : (CP1252_INV[cp] ?? 0x3F)); }
+    return new TextDecoder('utf-8', {fatal:true}).decode(new Uint8Array(bytes));
+  }catch(e){ return s; }
+}
+
+/* — Verificació anti-invenció: la cita ha d'existir al document — */
+function normalitza(s){
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9çñ·]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function trobaCita(doc, cita, liniaSuggerida){
+  const nc = normalitza(cita);
+  if(nc.length < 8) return null;
+  const prova = (ini, fi) => {
+    if(ini<1 || fi>doc.linies.length || fi<ini) return null;
+    const seg = doc.linies.slice(ini-1, fi).join('\n');
+    return normalitza(seg).includes(nc) ? {ini, fi, text:seg.length>420 ? seg.slice(0,420)+'…' : seg} : null;
+  };
+  // 1) confia en la línia que suggereix el motor
+  if(liniaSuggerida){
+    const [a,b] = String(liniaSuggerida).split('-').map(Number);
+    const r = prova(a||1, b||a||1); if(r) return r;
+  }
+  // 2) cerca per finestres d'1 a 4 línies
+  for(let mida=1; mida<=4; mida++)
+    for(let i=1; i+mida-1<=doc.linies.length; i++){
+      const r = prova(i, i+mida-1); if(r) return r;
+    }
+  // 3) últim recurs: la primera meitat de la cita
+  const mig = cita.slice(0, Math.max(40, Math.floor(cita.length/2)));
+  if(normalitza(mig).length >= 8 && mig.length < cita.length){
+    for(let mida=1; mida<=3; mida++)
+      for(let i=1; i+mida-1<=doc.linies.length; i++){
+        const seg = doc.linies.slice(i-1, i+mida-1).join('\n');
+        if(normalitza(seg).includes(normalitza(mig)))
+          return {ini:i, fi:i+mida-1, text:seg.length>420 ? seg.slice(0,420)+'…' : seg};
+      }
+  }
+  return null;
+}
+
+/* — Lots de documents per no passar-se de mida — */
+function fesLots(docs, maxCars){
+  const lots = []; let lot = [], cars = 0;
+  docs.forEach(d=>{
+    const mida = d.linies.join(' ').length;
+    if(lot.length && cars + mida > maxCars){ lots.push(lot); lot = []; cars = 0; }
+    lot.push(d); cars += mida;
+  });
+  if(lot.length) lots.push(lot);
+  return lots;
+}
+
+async function grup(tasques, n, alAcabarUna){
+  const res = []; let i = 0;
+  async function treballador(){
+    while(i < tasques.length){
+      const j = i++;
+      try{ res[j] = await tasques[j](); }catch(e){ res[j] = null; log('  ✗ lot '+(j+1)+': '+e.message.slice(0,150)); }
+      if(alAcabarUna) alAcabarUna();
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(n, tasques.length)}, treballador));
+  return res;
+}
+
+/* — Pipeline complet — */
+async function executaAnalisi(){
+  if(analitzant) return;
+  if(!estat.docs.length || !teClau()){ refrescaBoto(); return; }
+  if(Object.keys(estat.codis).length &&
+     !confirm('Ja hi ha una anàlisi feta. Vols repetir-la de zero amb tots els documents?')) return;
+
+  analitzant = true; refrescaBoto();
+  window.__clausRun = clausClassificades(); // congela les claus: editar els camps a mig procés no trenca l'anàlisi
+  // Còpia de seguretat: si l'anàlisi falla, es restaura l'estat anterior (mai perdre feina feta).
+  const copiaSeguretat = JSON.stringify({codis:estat.codis, informe:estat.informe, descartades:estat.descartades, taulaFeta:estat.taulaFeta});
+  estat.codis = {}; estat.informe = ''; estat.descartades = 0; estat.taulaFeta = false;
+  $('progres').style.display = ''; $('registre').textContent = '';
+  const pregunta = estat.projecte.pregunta || '(anàlisi exploratòria, sense pregunta fixada)';
+
+  try{
+    /* ── FASE 0: neteja de dades — primer APRÈN les regles, després les APLICA ── */
+    pintaFases(0); barra(2);
+    let regles = ['cap','no','res','-','--','cap comentari','res a dir','no ho sé','no ho se','ns/nc','nc','no sé','cap.','no.','res.','n/a','na','ninguno','ninguna','nada'];
+    const mostra = estat.docs.slice(0, 25).map(d=> d.linies.slice(0, 8).join('\n')).join('\n---\n').slice(0, 4500);
+    try{
+      const diag = await cridaLLM(
+`Ets un tècnic de preparació de dades qualitatives. Mira aquesta MOSTRA d'un corpus (respostes d'enquesta o entrevistes) i aprèn quines respostes són BUIDES DE CONTINGUT (no aporten res d'analitzable: "Cap", "No", "Res a dir", variants amb faltes…).
+
+MOSTRA:
+${mostra}
+
+Respon NOMÉS amb JSON: {"linies_buides":["variant1","variant2",...],"observacions":"una frase sobre l'estat de les dades"}. A linies_buides posa-hi NOMÉS respostes curtes sense contingut que vegis (o preveus) a la mostra, en minúscules. No hi posis mai respostes amb contingut real.`, true);
+      if(Array.isArray(diag.linies_buides))
+        regles = [...new Set([...regles, ...diag.linies_buides.map(x=>normalitza(String(x)))])];
+      log('Neteja — après: '+(diag.observacions||'(sense observacions)').slice(0,180));
+      log('Neteja — variants de resposta buida detectades: '+regles.length);
+    }catch(e){ log('Neteja — diagnòstic no disponible, aplico les regles estàndard.'); }
+    barra(6);
+    let reparades = 0, eliminades = 0;
+    estat.docs.forEach(d=>{
+      d.linies = d.linies.map(l=>{
+        const r = reparaMojibake(l).replace(/\s+/g,' ').trim();
+        if(r !== l) reparades++;
+        return r;
+      }).filter(l=>{
+        if(!l) return false;
+        if(/^\[.+\]$/.test(l)) return true; // capçalera [PREGUNTA]
+        if(regles.includes(normalitza(l))){ eliminades++; return false; }
+        return true;
+      });
+      // treu capçaleres [PREGUNTA] que s'han quedat sense resposta a sota
+      d.linies = d.linies.filter((l,i,arr)=> !(/^\[.+\]$/.test(l) && (i===arr.length-1 || /^\[.+\]$/.test(arr[i+1]))));
+    });
+    const abansDocs = estat.docs.length;
+    estat.docs = estat.docs.filter(d=> d.linies.some(l=>!/^\[.+\]$/.test(l)));
+    log('Neteja — aplicada: '+reparades+' línies normalitzades/reparades · '+eliminades+' respostes buides tretes · '+(abansDocs-estat.docs.length)+' documents sense contingut descartats · queden '+estat.docs.length+' documents.');
+    if(!estat.docs.length) throw new Error('Després de la neteja no queda cap document amb contingut analitzable.');
+    desa();
+
+    /* ── FASE A: codificació oberta per lots ── */
+    pintaFases(1); barra(10);
+    const lots = fesLots(docsActius(), 9000);
+    log('Corpus: '+docsActius().length+' documents actius → '+lots.length+' lots.');
+    let acabats = 0;
+    const resultats = await grup(lots.map((lot, li) => async ()=>{
+      const textLot = lot.map(d=>'### DOCUMENT '+d.id+'\n'+d.linies.map((l,i)=>(i+1)+' '+l).join('\n')).join('\n\n');
+      const prompt =
+`Ets un investigador expert en anàlisi qualitativa (metodologia de Graham Gibbs). Pregunta de recerca: ${pregunta}
+
+Fes CODIFICACIÓ OBERTA dels documents següents (cada línia va numerada). Identifica els codis rellevants (entre 1 i 5 per document; un codi pot repetir-se entre documents i HAURIA de repetir-se quan expressen la mateixa idea).
+
+REGLES ESTRICTES:
+- La "cita" ha de ser un fragment COPIAT LITERALMENT del document, sense canviar ni afegir ni una paraula (mínim 6 paraules).
+- "linia" és el número o interval de línies d'on surt la cita (p. ex. "3" o "2-4").
+- Etiquetes de codi en català, minúscules amb guions baixos (p. ex. "por_a_recaure").
+- "tipus": "descriptiu" (descriu què passa) o "analitic" (interpreta o explica).
+- Definició d'una frase, en català.
+- NO t'inventis res: si un document no aporta res, no en treguis codis.
+
+Respon NOMÉS amb JSON: {"codis":[{"etiqueta":"...","tipus":"descriptiu|analitic","definicio":"...","doc":"ID","linia":"n" ,"cita":"..."}]}
+
+${textLot}`;
+      return await cridaLLM(prompt, true);
+    }), 3, ()=>{ acabats++; pintaFases(1, acabats+'/'+lots.length+' lots'); barra(10 + 60*acabats/lots.length); });
+
+    /* Fusió + verificació anti-invenció */
+    let totals = 0, verificades = 0;
+    resultats.filter(Boolean).forEach(r=>{
+      (r.codis||[]).forEach(c=>{
+        totals++;
+        const doc = estat.docs.find(d=>d.id===String(c.doc).trim());
+        if(!doc || !c.cita || !c.etiqueta) { estat.descartades++; return; }
+        const loc = trobaCita(doc, String(c.cita), c.linia);
+        if(!loc){ estat.descartades++; return; }
+        verificades++;
+        const et = idNet(String(c.etiqueta)).toLowerCase();
+        const codi = estat.codis[et] || {citacions:[], tipus:(c.tipus==='analitic'?'analitic':'descriptiu'), pare:'(arrel)', definicio:'', data:avui()};
+        if(c.tipus==='analitic') codi.tipus = 'analitic';
+        if(!codi.definicio && c.definicio) codi.definicio = String(c.definicio);
+        if(!codi.citacions.some(x=>x.cas===doc.id && x.linia===(loc.fi>loc.ini? loc.ini+'-'+loc.fi : String(loc.ini))))
+          codi.citacions.push({text:loc.text, cas:doc.id, linia: loc.fi>loc.ini ? loc.ini+'-'+loc.fi : String(loc.ini)});
+        estat.codis[et] = codi;
+      });
+    });
+    log('Codis proposats: '+totals+' · cites verificades al text: '+verificades+' · descartades (no literals): '+estat.descartades);
+    if(!Object.keys(estat.codis).length) throw new Error('El motor no ha retornat cap codi verificable. Revisa que el fitxer contingui text qualitatiu.');
+    desa();
+
+    /* ── FASE B: agrupació en temes (en dos passos, escalable a centenars de codis) ── */
+    pintaFases(2); barra(74);
+    const totsCodis = Object.entries(estat.codis).filter(([,c])=>c.tipus!=='categoria');
+    // B1: proposa els temes a partir dels codis amb més evidència (resposta petita)
+    const principals = totsCodis.slice().sort((a,b)=>b[1].citacions.length-a[1].citacions.length).slice(0,120);
+    const respB = await cridaLLM(
+`Ets un investigador qualitatiu (Gibbs, cap. 6). Pregunta de recerca: ${pregunta}
+
+Mira aquests codis (els de més evidència d'un total de ${totsCodis.length}) i proposa entre 4 i 8 TEMES (categories) que els cobreixin bé. Noms en català, minúscules amb guions baixos, i una definició d'una frase per tema. NO assignis els codis, només defineix els temes.
+
+Codis:
+${principals.map(([et,c])=>'- '+et+' ('+c.citacions.length+' cites): '+c.definicio).join('\n').slice(0,10000)}
+
+Respon NOMÉS amb JSON: {"temes":[{"nom":"...","definicio":"..."}]}`, true);
+    const nomsTemes = [];
+    (respB.temes||[]).forEach(t=>{
+      const nom = idNet(String(t.nom)).toLowerCase();
+      if(!nom || estat.codis[nom]) return;
+      estat.codis[nom] = {tipus:'categoria', pare:'(arrel)', definicio:String(t.definicio||''), data:avui(), citacions:[]};
+      nomsTemes.push(nom+' — '+t.definicio);
+    });
+    if(!nomsTemes.length) throw new Error('No s\'han pogut crear temes.');
+    log('Temes proposats: '+nomsTemes.length);
+    // B2: assigna TOTS els codis als temes, per blocs de 70 (respostes JSON petites, en paral·lel)
+    const blocs = [];
+    for(let i=0; i<totsCodis.length; i+=70) blocs.push(totsCodis.slice(i, i+70));
+    let blocsFets = 0;
+    const assignacions = await grup(blocs.map(bloc => async ()=> cridaLLM(
+`Assigna cada codi a exactament UN d'aquests temes:
+${nomsTemes.join('\n')}
+
+Codis:
+${bloc.map(([et,c])=>'- '+et+': '+(c.definicio||'').slice(0,90)).join('\n')}
+
+Respon NOMÉS amb JSON: {"assignacions":{"etiqueta_codi":"nom_tema", ...}} (usa exactament les etiquetes i noms de tema donats).`, true)
+    ), 3, ()=>{ blocsFets++; pintaFases(2, 'assignant codis: '+blocsFets+'/'+blocs.length); });
+    let assignats = 0;
+    assignacions.filter(Boolean).forEach(r=>{
+      Object.entries(r.assignacions||{}).forEach(([et, tema])=>{
+        const clau = idNet(String(et)).toLowerCase(), nomT = idNet(String(tema)).toLowerCase();
+        if(estat.codis[clau] && estat.codis[clau].tipus!=='categoria' && estat.codis[nomT] && estat.codis[nomT].tipus==='categoria'){
+          estat.codis[clau].pare = nomT; assignats++;
+        }
+      });
+    });
+    log('Temes creats: '+nomsTemes.length+' · codis assignats: '+assignats+'/'+totsCodis.length);
+    desa();
+
+    /* ── FASE C: taula participant × codi ── */
+    pintaFases(3); barra(82);
+    generaTaula();
+    log('Taula participant × codi generada.');
+
+    /* ── FASE D: informe ── */
+    pintaFases(4); barra(86);
+    const temes = Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria');
+    const cos = temes.map(([nom,t])=>{
+      const fills = Object.entries(estat.codis).filter(([,c])=>c.pare===nom)
+        .sort((a,b)=>b[1].citacions.length-a[1].citacions.length).slice(0,12);
+      return '## TEMA: '+nom+'\nDefinició: '+t.definicio+'\n'+fills.map(([et,c])=>
+        '- Codi '+et+' ('+c.tipus+', '+c.citacions.length+' cites): '+c.definicio+'\n'+c.citacions.slice(0,2).map(ci=>'  · «'+ci.text.replace(/\n/g,' ')+'» ('+ci.cas+', l. '+ci.linia+')').join('\n')
+      ).join('\n');
+    }).join('\n\n').slice(0,13000);
+    estat.informe = await cridaLLM(
+`Ets un investigador qualitatiu que escriu en català acadèmic, natural i precís. Pregunta de recerca: ${pregunta}
+
+Redacta un INFORME D'ANÀLISI QUALITATIVA en Markdown a partir EXCLUSIVAMENT del material següent (temes, codis i cites literals). Normes:
+- Estructura: # títol · ## Introducció (3-4 frases: pregunta i corpus de ${docsActius().length} documents) · ## un apartat per tema (narra i interpreta, integra 2-3 cites literals en blockquote amb la referència (DOC, l. N)) · ## Conclusions (només qualitatiu, cap número ni percentatge) · ## Limitacions (3 frases).
+- Les cites, COPIA-LES EXACTAMENT del material; mai n'inventis ni en modifiquis cap.
+- Evita absoluts ("tots", "sempre", "mai"); usa "una part", "diversos participants".
+- No usis llenguatge inflat ni fórmules d'IA; escriu sobri i directe.
+
+MATERIAL:
+${cos}`, false);
+    barra(100); pintaFases(5);
+    log('Informe redactat. Fet!');
+    desa(); refresca();
+    vesA('informe');
+  }catch(e){
+    log('✗ ERROR: '+e.message);
+    const c = JSON.parse(copiaSeguretat);
+    if(Object.keys(c.codis).length){
+      estat.codis = c.codis; estat.informe = c.informe; estat.descartades = c.descartades; estat.taulaFeta = c.taulaFeta;
+      log('↩ S\'ha restaurat l\'anàlisi anterior (no s\'ha perdut res).');
+    }
+    alert('L\'anàlisi s\'ha aturat: '+e.message+(Object.keys(c.codis).length? '\n\nS\'ha restaurat l\'anàlisi anterior.' : ''));
+  }finally{
+    analitzant = false; window.__clausRun = null; refrescaBoto(); desa();
+  }
+}
+$('btn-analitza').onclick = executaAnalisi;
+
+/* ─────────────────────────── TAULA CAS × CODI ─────────────────────────── */
+let taulaDades = null;
+function generaTaula(){
+  const ets = Object.keys(estat.codis).filter(et=>estat.codis[et].tipus!=='categoria').sort();
+  if(!ets.length || !estat.docs.length){ taulaDades = null; return; }
+  const docsAmbCites = estat.docs.filter(d=> ets.some(et=>(estat.codis[et].citacions||[]).some(c=>c.cas===d.id)));
+  taulaDades = {caps:['Participant', ...ets], files: docsAmbCites.map(d=>
+    [d.id, ...ets.map(et=>{
+      const ci = (estat.codis[et].citacions||[]).find(c=>c.cas===d.id && c.rev!=='no');
+      return ci ? '«'+ci.text.replace(/\n/g,' ').slice(0,70)+(ci.text.length>70?'…':'')+'» (l. '+ci.linia+')' : '';
+    })])};
+  estat.taulaFeta = true;
+}
+function pintaTaula(){
+  if(!taulaDades) generaTaula();
+  $('zona-taula').innerHTML = taulaDades
+    ? '<table><tr>'+taulaDades.caps.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr>'+
+      taulaDades.files.map(f=>'<tr>'+f.map((c,i)=>i? `<td>${esc(c)||'<span class="comptador">—</span>'}</td>` : `<td><b>${esc(c)}</b></td>`).join('')+'</tr>').join('')+'</table>'
+    : '<div class="buit">Es genera automàticament amb l\'anàlisi.</div>';
+}
+$('btn-taula-csv').onclick = ()=>{
+  if(!taulaDades) generaTaula();
+  if(!taulaDades){ alert('Encara no hi ha res a exportar.'); return; }
+  const q = v => '"'+String(v).replace(/"/g,'""')+'"';
+  const csv = '﻿' + [taulaDades.caps, ...taulaDades.files].map(f=>f.map(q).join(';')).join('\r\n');
+  descarrega('taula_participant_codi.csv', csv, 'text/csv;charset=utf-8');
+};
+
+/* ──────────── COMPARACIÓ PER SUBGRUPS (Miles & Huberman 1994; Gibbs Tabla 6.5) ──────────── */
+function atributsDisponibles(){
+  const s = new Set();
+  estat.docs.forEach(d=> Object.keys(d.atributs||{}).forEach(k=> s.add(k)));
+  return [...s];
+}
+function temesAmbFills(){
+  return Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').map(([nom,t])=>({
+    nom, fills: Object.keys(estat.codis).filter(et=>estat.codis[et].pare===nom)
+  })).filter(t=>t.fills.length);
+}
+let subgrupsDades = null;
+$('btn-subgrups').onclick = ()=>{
+  const atr = $('sel-atribut').value;
+  if(!atr){ alert('Cap atribut de cas disponible: puja un fitxer amb una columna categòrica (p. ex. curs).'); return; }
+  const temes = temesAmbFills();
+  if(!temes.length){ alert('Primer cal l\'anàlisi (temes i codis).'); return; }
+  const valors = [...new Set(estat.docs.map(d=>(d.atributs||{})[atr]).filter(Boolean))].sort();
+  const docsDe = {}; valors.forEach(v=>{ docsDe[v] = new Set(estat.docs.filter(d=>(d.atributs||{})[atr]===v).map(d=>d.id)); });
+  const files = temes.map(t=>{
+    const cel·les = valors.map(v=>{
+      const participants = new Set(); let citaRef = null;
+      t.fills.forEach(et=> (estat.codis[et].citacions||[]).forEach(ci=>{
+        if(ci.rev==='no' || !docsDe[v].has(ci.cas)) return;
+        participants.add(ci.cas);
+        if(!citaRef) citaRef = ci;
+      }));
+      return {n: participants.size, cita: citaRef};
+    });
+    return {tema: t.nom, cel·les};
+  });
+  subgrupsDades = {atr, valors, files, totals: valors.map(v=>docsDe[v].size)};
+  $('zona-subgrups').innerHTML = '<table><tr><th>Tema</th>'+valors.map((v,i)=>`<th>${esc(v)} <span class="comptador">(${subgrupsDades.totals[i]} part.)</span></th>`).join('')+'</tr>'+
+    files.map(f=>'<tr><td><b>'+esc(f.tema.replace(/_/g,' '))+'</b></td>'+f.cel·les.map(c=>
+      '<td>'+(c.n? c.n+' participants'+(c.cita? '<br><span class="ref-font" data-doc="'+esc(c.cita.cas)+'" data-linia="'+esc(c.cita.linia)+'">«'+esc(c.cita.text.slice(0,60))+'…» ('+esc(c.cita.cas)+', l. '+esc(c.cita.linia)+')</span>' : '') : '<span class="comptador">—</span>')+'</td>').join('')+'</tr>').join('')+'</table>'+
+    '<div class="nota" style="margin-top:6px;">Llegeix per files (un tema entre subgrups) i per columnes (el perfil de cada subgrup); les diferències s\'han d\'explicar tornant al text i descartant explicacions rivals (Gibbs, cap. 6).</div>';
+  $('btn-subgrups-csv').disabled = false;
+};
+$('btn-subgrups-csv').onclick = ()=>{
+  if(!subgrupsDades) return;
+  const q = v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const files = [['Tema', ...subgrupsDades.valors.map((v,i)=>v+' (n='+subgrupsDades.totals[i]+')')].map(q).join(';')];
+  subgrupsDades.files.forEach(f=> files.push([f.tema.replace(/_/g,' '), ...f.cel·les.map(c=>c.n? c.n+' participants'+(c.cita? ' — «'+c.cita.text.slice(0,80)+'» ('+c.cita.cas+', l. '+c.cita.linia+')' : '') : '')].map(q).join(';')));
+  descarrega('comparacio_subgrups.csv', '﻿'+files.join('\r\n'), 'text/csv;charset=utf-8');
+};
+
+/* ──────────── SATURACIÓ TEMÀTICA (Guest et al. 2006; Saunders et al. 2018) ──────────── */
+$('btn-saturacio').onclick = ()=>{
+  const codis = Object.entries(estat.codis).filter(([,c])=>c.tipus!=='categoria');
+  if(!codis.length){ alert('Primer cal l\'anàlisi (codis).'); return; }
+  const ordre = estat.docs.map(d=>d.id);
+  const posicio = {}; ordre.forEach((id,ix)=> posicio[id]=ix);
+  const nousPer = new Array(ordre.length).fill(0);
+  codis.forEach(([,c])=>{
+    let min = Infinity;
+    (c.citacions||[]).forEach(ci=>{ const p = posicio[ci.cas]; if(p!==undefined && p<min) min = p; });
+    if(min<Infinity) nousPer[min]++;
+  });
+  const total = nousPer.reduce((a,b)=>a+b,0);
+  const tram = Math.max(1, Math.round(ordre.length*0.2));
+  const nousFinals = nousPer.slice(-tram).reduce((a,b)=>a+b,0);
+  const pct = total? Math.round(100*nousFinals/total) : 0;
+  const maxBar = Math.max(...nousPer, 1);
+  let acum = 0;
+  $('zona-saturacio').innerHTML =
+    '<div style="display:flex; align-items:flex-end; gap:1px; height:90px; border-bottom:1px solid var(--vora); padding-bottom:2px;">'+
+    nousPer.map((n,ix)=>`<div title="${esc(ordre[ix])}: ${n} codis nous" style="flex:1; min-width:2px; height:${Math.round(88*n/maxBar)}px; background:${n?'var(--accent)':'#e5e7eb'};"></div>`).join('')+'</div>'+
+    '<div class="comptador" style="display:flex; justify-content:space-between;"><span>'+esc(ordre[0]||'')+'</span><span>ordre dels participants →</span><span>'+esc(ordre[ordre.length-1]||'')+'</span></div>'+
+    '<div style="margin-top:10px;"><b>'+total+' codis únics</b> en '+ordre.length+' participants. L\'últim 20% del corpus ('+tram+' participants) aporta <b>'+nousFinals+' codis nous ('+pct+'%)</b>.</div>'+
+    '<div class="nota" style="margin-top:4px;">'+(pct<=5
+      ? '✓ Corba aplanada: evidència compatible amb saturació temàtica (Guest, Bunce & Johnson, 2006). Recorda que la saturació és un judici, no un llindar mecànic (Saunders et al., 2018; Braun & Clarke, 2021 en són crítiques).'
+      : '✗ La corba encara no s\'aplana: els participants finals segueixen aportant codis nous. Per Guest et al. (2006) caldria més corpus o revisar la granularitat dels codis (molts codis quasi-idèntics inflen la corba).')+'</div>';
+};
+
+/* ──────────── CO-OCURRÈNCIES CODI×CODI (Namey et al. 2008; Gibbs cap. 8-9) ──────────── */
+$('btn-coocurrencia').onclick = ()=>{
+  const codis = Object.entries(estat.codis).filter(([,c])=>c.tipus!=='categoria' && (c.citacions||[]).length)
+    .sort((a,b)=>b[1].citacions.length-a[1].citacions.length).slice(0,12);
+  if(codis.length<2){ alert('Calen almenys 2 codis amb cites.'); return; }
+  const casosDe = {}; codis.forEach(([et,c])=>{ casosDe[et] = new Set(c.citacions.filter(ci=>ci.rev!=='no').map(ci=>ci.cas)); });
+  const maxV = Math.max(...codis.flatMap(([a])=>codis.map(([b])=> a===b?0:[...casosDe[a]].filter(x=>casosDe[b].has(x)).length)), 1);
+  $('zona-coocurrencia').innerHTML = '<table><tr><th></th>'+codis.map(([et])=>`<th style="writing-mode:vertical-rl; transform:rotate(180deg); max-height:130px; font-size:11px;">${esc(et.replace(/_/g,' '))}</th>`).join('')+'</tr>'+
+    codis.map(([a])=>'<tr><td><b>'+esc(a.replace(/_/g,' '))+'</b></td>'+codis.map(([b])=>{
+      if(a===b) return '<td style="background:#f3f4f6;"></td>';
+      const n = [...casosDe[a]].filter(x=>casosDe[b].has(x)).length;
+      const alfa = n? (0.15 + 0.6*n/maxV).toFixed(2) : 0;
+      return '<td style="text-align:center;'+(n? ' background:rgba(30,86,160,'+alfa+');'+(n/maxV>0.5?' color:#fff;':'') : '')+'">'+(n||'')+'</td>';
+    }).join('')+'</tr>').join('')+'</table>'+
+    '<div class="nota" style="margin-top:6px;">Cel·la = nombre de participants on co-ocorren els dos codis. És un valor heurístic: cada co-ocurrència s\'ha de llegir al text abans d\'afirmar cap relació (Gibbs, cap. 9; Coffey & Atkinson).</div>';
+};
+
+/* ─────────────────────────── VISTA TEMES I CITES ─────────────────────────── */
+function pintaCodis(){
+  const entrades = Object.entries(estat.codis);
+  const nCodis = entrades.filter(([,c])=>c.tipus!=='categoria').length;
+  $('compta-codis').textContent = nCodis ? '· '+nCodis+' codis' + (estat.descartades? ' · '+estat.descartades+' cites descartades per no ser literals' : '') : '';
+  if(!entrades.length){ $('zona-codis').innerHTML = '<div class="buit">Encara no hi ha codis. Fes l\'anàlisi a la pestanya 1.</div>'; return; }
+  const temes = entrades.filter(([,c])=>c.tipus==='categoria');
+  const orfes = entrades.filter(([,c])=>c.tipus!=='categoria' && (!c.pare || c.pare==='(arrel)' || !estat.codis[c.pare]));
+  const bloc = (nom, def, fills) =>
+    `<div class="caixa"><h2>📁 ${esc(nom.replace(/_/g,' '))}</h2><div class="nota">${esc(def)}</div>`+
+    fills.map(([et,c])=>
+      `<div style="margin:12px 0 4px;"><b>${esc(et.replace(/_/g,' '))}</b> <span class="pill ${c.tipus}">${c.tipus}</span> <span class="comptador">${c.citacions.length} cites</span>
+       <button class="b perill btn-del-codi" data-et="${esc(et)}" style="float:right; padding:2px 8px;">✕</button></div>
+       <div class="nota">${esc(c.definicio||'(sense definició)')}</div>`+
+      c.citacions.map((ci,ix)=>`<div class="cita-verbatim" style="${ci.rev==='no'?'opacity:.45; text-decoration:line-through;':''}">
+        <span style="float:right; white-space:nowrap; margin-left:8px;">
+          <button class="b sec btn-adj" data-et="${esc(et)}" data-ix="${ix}" data-v="ok" title="Accepto aquesta cita" style="padding:0 7px;${ci.rev==='ok'?' background:var(--ok); color:#fff; border-color:var(--ok);':''}">✓</button>
+          <button class="b perill btn-adj" data-et="${esc(et)}" data-ix="${ix}" data-v="no" title="Rebutjo aquesta cita" style="padding:0 7px;${ci.rev==='no'?' background:var(--mal); color:#fff;':''}">✗</button>
+        </span>
+        <span class="ref-font" data-doc="${esc(ci.cas)}" data-linia="${esc(ci.linia)}" title="Obre la font original"><b>${esc(ci.cas)}, línia ${esc(ci.linia)}</b></span>: ${esc(ci.text)}</div>`).join('')
+    ).join('')+'</div>';
+  $('zona-codis').innerHTML =
+    temes.map(([nom,t])=> bloc(nom, t.definicio, entrades.filter(([,c])=>c.pare===nom && c.tipus!=='categoria'))).join('')+
+    (orfes.length && temes.length ? bloc('altres', 'Codis sense tema assignat.', orfes) : !temes.length ? bloc('codis', 'Codis trobats (sense agrupació en temes).', orfes) : '');
+  document.querySelectorAll('.btn-del-codi').forEach(b=> b.onclick = ()=>{
+    if(!confirm('Eliminar el codi «'+b.dataset.et+'»?')) return;
+    delete estat.codis[b.dataset.et];
+    estat.taulaFeta = false; taulaDades = null;
+    desa(); refresca();
+  });
+  // Adjudicació humana per cita (human-in-the-loop: Morgan 2023; De Paoli 2024)
+  document.querySelectorAll('.btn-adj').forEach(b=> b.onclick = ()=>{
+    const ci = estat.codis[b.dataset.et].citacions[+b.dataset.ix];
+    ci.rev = ci.rev===b.dataset.v ? undefined : b.dataset.v;
+    estat.taulaFeta = false; taulaDades = null;
+    desa(); pintaCodis();
+  });
+}
+
+/* ─────────────────────────── INFORME ─────────────────────────── */
+function mdAHtml(md){
+  const linies = md.split(/\r?\n/); let html = '', llista = false;
+  const tanca = ()=>{ if(llista){ html+='</ul>'; llista=false; } };
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>');
+  linies.forEach(l=>{
+    if(/^###\s/.test(l)){ tanca(); html+='<h3>'+inline(l.slice(4))+'</h3>'; }
+    else if(/^##\s/.test(l)){ tanca(); html+='<h2>'+inline(l.slice(3))+'</h2>'; }
+    else if(/^#\s/.test(l)){ tanca(); html+='<h1>'+inline(l.slice(2))+'</h1>'; }
+    else if(/^>\s?/.test(l)){ tanca(); html+='<blockquote>'+inline(l.replace(/^>\s?/,''))+'</blockquote>'; }
+    else if(/^[-*]\s/.test(l)){ if(!llista){ html+='<ul>'; llista=true; } html+='<li>'+inline(l.slice(2))+'</li>'; }
+    else if(l.trim()===''){ tanca(); }
+    else { tanca(); html+='<p>'+inline(l)+'</p>'; }
+  });
+  tanca(); return html;
+}
+function pintaInforme(){
+  $('informe-cos').innerHTML = estat.informe ? linkifica(mdAHtml(estat.informe))
+    : '<div class="buit">Encara no hi ha informe. Fes l\'anàlisi a la pestanya 1.</div>';
+}
+$('ex-informe-md').onclick = ()=>{
+  if(!estat.informe){ alert('Encara no hi ha informe.'); return; }
+  descarrega('informe_qualitatiu.md', estat.informe, 'text/markdown;charset=utf-8');
+};
+$('ex-informe-doc').onclick = ()=>{
+  if(!estat.informe){ alert('Encara no hi ha informe.'); return; }
+  const doc = '<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>'+
+    'body{font-family:Arial; font-size:12pt; text-align:justify; line-height:1.5;} h1,h2,h3{color:#0f3b6e;} blockquote{background:#fef3c7; padding:6pt 10pt; margin:8pt 0;}'+
+    '</style></head><body>'+mdAHtml(estat.informe)+'</body></html>';
+  descarrega('informe_qualitatiu.doc', '﻿'+doc, 'application/msword');
+};
+
+/* ═══════════════════════ ANÀLISIS DEL LLIBRE (Gibbs) ═══════════════════════ */
+let ocupatLlibre = false;
+
+function ctxTemes(maxCites){
+  const linies = [];
+  Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').forEach(([nom,t])=>{
+    linies.push('## TEMA: '+nom+' — '+t.definicio);
+    Object.entries(estat.codis).filter(([,c])=>c.pare===nom).forEach(([et,c])=>{
+      linies.push('- '+et+' ('+c.tipus+', '+c.citacions.length+' cites): '+c.definicio);
+      c.citacions.slice(0,maxCites).forEach(ci=>linies.push('  «'+ci.text.replace(/\n/g,' ')+'» ('+ci.cas+', l. '+ci.linia+')'));
+    });
+  });
+  return linies.join('\n').slice(0,11000);
+}
+function ctxCorpusMostra(maxChars){
+  // Mostra ESTRATIFICADA: intercala els subgrups (atributs) perquè cap quedi fora
+  // i les comparacions entre subgrups siguin possibles amb el pressupost de context.
+  let llista = docsActius();
+  const atrs = atributsDisponibles();
+  if(atrs.length){
+    const grups = {};
+    llista.forEach(d=>{ const v = (d.atributs||{})[atrs[0]] || '—'; (grups[v] = grups[v]||[]).push(d); });
+    const claus = Object.keys(grups);
+    llista = [];
+    for(let i=0; claus.some(k=>grups[k][i]); i++) claus.forEach(k=>{ if(grups[k][i]) llista.push(grups[k][i]); });
+  }
+  const out = []; let total = 0, inclosos = 0;
+  for(const d of llista){
+    const t = '### '+d.id+(Object.keys(d.atributs||{}).length? ' ['+Object.entries(d.atributs).map(([k,v])=>k+': '+v).join(' - ')+']' : '')+'\n'+d.linies.map((l,i)=>(i+1)+' '+l).join('\n');
+    if(total + t.length > maxChars) break;
+    out.push(t); total += t.length; inclosos++;
+  }
+  return {text: out.join('\n\n'), inclosos};
+}
+const NORMES_MD = '\n\nNormes de redacció: escriu en català, en Markdown (## per apartats). Tota cita ha de ser un fragment LITERAL del material entre « » seguit de (DOC, l. N). No usis mai absoluts ("tots", "sempre"); usa "una part", "diversos participants". Sobri i directe, sense llenguatge inflat.';
+
+/* — Vincles d'observació: (P8, l. 6) clicable → visor de la font amb les línies en groc — */
+function linkifica(html){
+  return html.replace(/\(([A-Za-z0-9_·-]{1,32}),\s*l(?:í?nia)?\.?\s*(\d+(?:-\d+)?)\)/g, (m, doc, lin)=>
+    estat.docs.some(d=>d.id===doc) ? '<span class="ref-font" data-doc="'+doc+'" data-linia="'+lin+'" title="Obre la font original">'+m+'</span>' : m);
+}
+function obreFont(docId, linia){
+  const d = estat.docs.find(x=>x.id===docId); if(!d) return;
+  const [a,b] = String(linia).split('-').map(Number);
+  document.getElementById('font-titol').textContent = 'Font original — '+docId+' · línia '+linia+' (en groc)';
+  document.getElementById('font-linies').innerHTML = d.linies.map((l,i)=>{
+    const n = i+1, dins = n>=a && n<=(b||a);
+    return '<div class="fl'+(dins?' dins':'')+'" id="fl-'+n+'"><span class="num">'+n+'</span><span style="flex:1">'+esc(l)+'</span></div>';
+  }).join('');
+  document.getElementById('dlg-font').showModal();
+  setTimeout(()=>{ const el = document.getElementById('fl-'+a); if(el) el.scrollIntoView({block:'center'}); }, 60);
+}
+document.addEventListener('click', e=>{
+  const t = e.target.closest('.ref-font');
+  if(t && t.dataset.doc) obreFont(t.dataset.doc, t.dataset.linia);
+});
+
+function verificaCitesMd(md){
+  const normDocs = estat.docs.map(d=> normalitza(d.linies.join(' ')));
+  let total = 0, dolentes = 0;
+  const net = md.replace(/«([^»]{15,}?)»/g, (m, cita)=>{
+    total++;
+    const nc = normalitza(cita);
+    if(normDocs.some(t=>t.includes(nc))) return m;
+    dolentes++;
+    return m+' ⚠️(cita no verificada al corpus)';
+  });
+  const capc = total ? '> Verificació anti-invenció: '+(total-dolentes)+'/'+total+' cites literals confirmades al corpus.\n\n' : '';
+  return capc + net;
+}
+
+const CATALEG = [
+ {clau:'pregunta_lliure', titol:'Pregunta lliure al corpus', cap:'Gibbs cap. 8-9',
+  llibre:'La interrogació del corpus és una operació central del treball CAQDAS (Gibbs, cap. 8-9): cerques i recuperacions per respondre preguntes concretes, sempre tornant al text i llegint cada resultat. Aquí la pregunta la formules tu — «què diuen de les tutories?», «compara primer i quart en la percepció del professorat» — i pots repreguntar tantes vegades com calgui, canviant l\'enfocament o l\'abast a dalt.',
+  obtens:'Resposta directa a la teva pregunta, fonamentada només en el corpus, amb cites literals (DOC, l. N) clicables i verificades, i els límits del que les dades permeten dir.',
+  requereix:'corpus',
+  marc:'La teva pregunta (canvia-la i torna a aplicar tantes vegades com vulguis)',
+  marcPh:'p. ex. Compara què valoren de les pràctiques els de primer i els de quart',
+  executa: async (progres, marcText)=>{
+    const preguntaLliure = (marcText||'').trim();
+    if(!preguntaLliure) throw new Error('Escriu la pregunta al quadre de la targeta.');
+    const mostra = ctxCorpusMostra(8500);
+    const temes = Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').map(([n,t])=>'- '+n+': '+t.definicio).join('\n');
+    return cridaLLM('Ets un investigador qualitatiu responent una pregunta concreta INTERROGANT el corpus (Gibbs cap. 8-9). PREGUNTA DE L\'INVESTIGADOR: '+preguntaLliure+'\n\nRespon NOMÉS amb el que hi ha al material; si les dades no permeten respondre, digues-ho clarament. Cada document porta els seus atributs entre claudàtors (p. ex. [Curs: Primer]) — usa\'ls si la pregunta demana comparar subgrups. Estructura: ## Resposta (2-4 paràgrafs ancorats amb cites literals i (DOC, l. N)) · ## Evidència clau (llista de cites) · ## Límits de la resposta (què no es pot saber amb aquestes dades).'+(temes? '\n\nTEMES JA IDENTIFICATS:\n'+temes : '')+'\n\nMATERIAL (mostra de '+mostra.inclosos+' documents de '+docsActius().length+'):\n'+mostra.text+NORMES_MD, false);
+  }},
+
+ {clau:'inductiu', titol:'Anàlisi inductiva (guiada per dades)', cap:'Cap. 1 i 4',
+  llibre:'Enfocament «guiat per dades»: els codis i la teoria emergeixen del text, no de conceptes previs. Gibbs demana codificació oberta amb *bracketing* (aparcar deliberadament les idees prèvies i la literatura), comparació constant i l\'escala descriptiu → categoria → analític/teòric. En la tradició de Glaser, la categoria central «es descobreix» a les dades.',
+  obtens:'Conceptes emergents llegits de zero (ignorant els temes ja construïts), l\'escalat cap a codis teòrics, 2-3 proposicions de teoria emergent i el contrast final amb l\'anàlisi temàtica existent.',
+  requereix:'corpus',
+  executa: async ()=>{
+    const mostra = ctxCorpusMostra(9000);
+    const temesActuals = Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').map(([n,t])=>n+' — '+t.definicio).join('\n') || '(cap)';
+    return cridaLLM('Ets un investigador qualitatiu fent ANÀLISI INDUCTIVA pura (Gibbs cap. 1 i 4: guiat per dades). BRACKETING OBLIGATORI: aparca tota idea prèvia; NO usis cap marc teòric conegut ni els temes que et donaré al final — llegeix el material de zero i deixa que els conceptes EMERGEIXIN del que diuen els informants ("a través dels ulls dels participants").\n\n1) ## Conceptes emergents — 6-10 conceptes sorgits del text (nom nou en català, definició d\'una frase, 1-2 cites literals cadascun). 2) ## De descriptiu a teòric — quins d\'aquests conceptes escalen de descriptius a analítics/teòrics i per què (comparació constant: el concepte té sentit a tots els passatges?). 3) ## Teoria emergent — 2-3 proposicions teòriques que es "descobreixen" de les dades (Glaser), cadascuna ancorada. 4) ## Contrast amb l\'anàlisi temàtica existent — NOMÉS ara mira els temes ja construïts i digues què aporta de nou la lectura inductiva:\n'+temesActuals+'\n\nMATERIAL (mostra de '+mostra.inclosos+' documents de '+docsActius().length+'):\n'+mostra.text+NORMES_MD, false);
+  }},
+
+ {clau:'deductiu', titol:'Anàlisi deductiva (prova d\'hipòtesis)', cap:'Cap. 1, 7 i 8-9',
+  llibre:'Gibbs recorda que inducció i deducció «s\'usen totes dues» (cap. 1) i que la cerca booleana AND serveix precisament «per provar hipòtesis» (cap. 8-9). La prova és honesta només si es busquen activament els casos negatius i es consideren explicacions rivals abans d\'acceptar res (cap. 7) — el contrari és anecdotisme selectiu.',
+  obtens:'Cada hipòtesi contrastada amb les dades: evidència a favor, evidència en contra (casos negatius), explicacions rivals i veredicte (recolzada · matisada · refutada · sense evidència).',
+  requereix:'corpus',
+  marc:'Les teves hipòtesis (una per línia; buit = es deriven de la pregunta de recerca i dels temes)',
+  marcPh:'Les tutories faciliten la interacció amb el professorat&#10;La concentració d\'exàmens limita l\'aprenentatge',
+  executa: async (progres, marcText)=>{
+    let hipotesis = (marcText||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    if(!hipotesis.length){
+      if(progres) progres('derivant hipòtesis contrastables…');
+      const temes = Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').map(([n,t])=>n+' — '+t.definicio).join('\n');
+      const r = await cridaLLM('Proposa 4-6 hipòtesis CONTRASTABLES amb dades qualitatives per a la pregunta: '+(estat.projecte.pregunta||'experiència formativa d\'estudiants')+(temes? '\nTemes ja identificats al corpus:\n'+temes : '')+'\nCada hipòtesi ha d\'afirmar una relació concreta i falsable. Respon NOMÉS JSON: {"hipotesis":["...","..."]}', true);
+      hipotesis = r.hipotesis||[];
+    }
+    if(progres) progres('contrastant '+hipotesis.length+' hipòtesis amb el corpus…');
+    const mostra = ctxCorpusMostra(8500);
+    return cridaLLM('Ets un investigador qualitatiu fent ANÀLISI DEDUCTIVA (Gibbs cap. 1, 7, 8-9): prova aquestes hipòtesis contra les dades, amb la disciplina del cap. 7 (casos negatius i explicacions rivals obligatoris; res d\'anecdotisme selectiu).\n\nHIPÒTESIS:\n'+hipotesis.map((h,i)=>'H'+(i+1)+'. '+h).join('\n')+'\n\nPer a CADA hipòtesi: ### H_n (enunciat) · **Evidència a favor** (cites literals amb (DOC, l. N)) · **Evidència en contra / casos negatius** (busca-la activament; si no n\'hi ha, digues-ho) · **Explicacions rivals** (quina altra cosa podria explicar el patró) · **Veredicte**: recolzada / matisada / refutada / sense evidència suficient, amb una frase de justificació. Acaba amb ## Síntesi (què queda en peu i què caldria investigar).\n\nMATERIAL (mostra de '+mostra.inclosos+' documents de '+docsActius().length+'):\n'+mostra.text+NORMES_MD, false);
+  }},
+
+ {clau:'tipologia', titol:'Tipologia de casos', cap:'Cap. 6',
+  llibre:'«Cada cas s\'assigna a un i només un tipus; una tipologia encarna una teoria implícita i no s\'ha de construir a la lleugera.» Es construeix comparant casos a les taules (files = casos) i buscant configuracions que es repeteixen.',
+  obtens:'3–5 tipus de participant, la teoria implícita de cada tipus, els casos assignats i una cita definitòria per tipus.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Ets un investigador qualitatiu aplicant la construcció de TIPOLOGIES de Gibbs (cap. 6): cada cas a un i només un tipus; la tipologia encarna una teoria implícita que has de fer explícita. Pregunta de recerca: '+(estat.projecte.pregunta||'(exploratòria)')+'\n\nA partir dels temes, codis i cites següents, proposa 3-5 tipus, assigna-hi els casos que apareixen a les cites, explicita la teoria implícita de la tipologia i dona 1-2 cites literals definitòries per tipus. Acaba amb l\'apartat "## Casos que no encaixen" (Gibbs: els casos desviats no es descarten).\n\n'+ctxTemes(2)+NORMES_MD, false)},
+
+ {clau:'model_axial', titol:'Model axial i categoria nuclear (teoria fonamentada)', cap:'Cap. 6 · Tabla 6.7',
+  llibre:'Model de Strauss & Corbin: «Condicions causals → Fenomen → Estratègies (en un Context, amb Condicions intervinents) → Acció/interacció → Conseqüències». La codificació selectiva tria UNA categoria central amb el màxim poder explicatiu i hi relaciona sistemàticament la resta.',
+  obtens:'El fenomen central del teu corpus muntat com a model axial complet, amb cada element ancorat a cites.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Ets un investigador de teoria fonamentada aplicant la CODIFICACIÓ AXIAL I SELECTIVA (Gibbs cap. 6, Tabla 6.7 de Strauss & Corbin). Pregunta: '+(estat.projecte.pregunta||'(exploratòria)')+'\n\n1) Tria la CATEGORIA NUCLEAR (la de més poder explicatiu: relaciona la majoria de temes) i justifica-la. 2) Munta el model axial: Condicions causals → Fenomen → Context → Condicions intervinents → Estratègies d\'acció/interacció → Conseqüències. Cada element del model amb 1-2 cites literals. 3) Acaba amb "## Proposició teòrica" (2-3 frases que es podrien contrastar).\n\n'+ctxTemes(2)+NORMES_MD, false)},
+
+ {clau:'casos_negatius', titol:'Casos negatius i explicacions rivals', cap:'Cap. 6–7',
+  llibre:'«Els casos negatius no es descarten: s\'amplia el codi per incloure\'ls.» La validesa exigeix considerar explicacions rivals per a cada associació afirmada i evitar l\'anecdotisme selectiu (citar només el que confirma la idea).',
+  obtens:'Per cada tema principal: les veus que el contradiuen o el matisen, i les explicacions rivals que caldria descartar abans de concloure.',
+  requereix:'codis',
+  executa: async ()=>{
+    const mostra = ctxCorpusMostra(6000);
+    return cridaLLM('Ets un revisor escèptic aplicant l\'anàlisi de CASOS NEGATIUS i EXPLICACIONS RIVALS (Gibbs cap. 6-7): busca activament el que CONTRADIU cada tema, i per cada patró afirmat proposa explicacions alternatives que caldria descartar. Senyala també possibles anecdotismes selectius.\n\nTEMES I CODIS:\n'+ctxTemes(1)+'\n\nMOSTRA DEL CORPUS (per buscar-hi veus discordants):\n'+mostra.text+NORMES_MD, false);
+  }},
+
+ {clau:'narrativa', titol:'Anàlisi narrativa', cap:'Cap. 5 · Tabla 5.2',
+  llibre:'Explora COM ho diu la gent i per què: autopresentació, identitat, significat. Estructura de Labov & Waletzky: Resum · Orientació · Complicació · Avaluació («i què? — el punt de la història») · Resolució · Coda. Cal buscar moments decisius/epifanies (Denzin) i recordar que «l\'absència d\'un tema és significativa».',
+  obtens:'Les mini-històries del corpus desmuntades per elements, els moments decisius i el que revelen sobre la identitat dels participants.',
+  requereix:'corpus',
+  executa: async ()=>{
+    const mostra = ctxCorpusMostra(9000);
+    return cridaLLM('Ets un analista de NARRACIONS (Gibbs cap. 5). Sobre el material següent: 1) identifica mini-històries o relats (encara que siguin breus) i desmunta\'ls amb els elements de Labov & Waletzky (Orientació, Complicació, Avaluació, Resolució); 2) senyala moments decisius o epifanies (Denzin); 3) comenta l\'autopresentació i identitat que construeixen els parlants; 4) apartat "## Absències significatives": de què NO parla ningú tot i ser esperable. Si el material és de respostes curtes d\'enquesta, digues-ho i treballa amb les respostes més narratives.\n\n'+mostra.text+'\n\n(Mostra de '+mostra.inclosos+' documents de '+docsActius().length+'.)'+NORMES_MD, false);
+  }},
+
+ {clau:'emocional', titol:'Anàlisi emocional (amb segon agent revisor)', cap:'Cap. 5 i 7',
+  llibre:'Gibbs (cap. 5, pas 6): «ressaltar les paraules d\'emoció i les metàfores» — la retòrica porta tant significat com el contingut. Les etiquetes EMERGEIXEN del text amb noms proporcionats al llenguatge real (p. ex. «malestar per l\'organització temporal», mai termes més forts que el que diuen les dades), un SEGON AGENT independent revisa cada etiqueta (cap. 7), i les propostes racionals van a part («coses a millorar»). El NRC Emotion Lexicon/Plutchik queda com a referència externa, no com a cotilla.',
+  obtens:'Mapa emocional amb categories emergents i proporcionades, cada expressió revisada per un segon agent, cites clicables cap a la font, i CSV per participant amb l\'etiqueta del 1r agent i la revisada.',
+  links:[['pysentimiento (castellà, transformers)','https://github.com/pysentimiento/pysentimiento'],['NRCLex (lèxic NRC-Plutchik)','https://github.com/DemetersSon83/NRCLex'],['NRC Emotion Lexicon (original)','https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm']],
+  requereix:'corpus',
+  executa: async (progres)=>{
+    /* Passada 1: detecció amb etiquetes PROPORCIONADES que emergeixen del text */
+    const lots = fesLots(docsActius(), 4500);
+    let fets = 0;
+    const resultats = await grup(lots.map(lot => async ()=>{
+      const textLot = lot.map(d=>'### DOCUMENT '+d.id+'\n'+d.linies.map((l,i)=>(i+1)+' '+l).join('\n')).join('\n\n');
+      return cridaLLM('Ets un analista d\'emocions en text qualitatiu (Gibbs cap. 5). Detecta al material següent (línies numerades) les expressions amb càrrega emocional REAL.\n\nREGLES ESTRICTES:\n- L\'etiqueta ha de ser un terme català PRECÍS I PROPORCIONAT al llenguatge literal del fragment (exemples: malestar, frustracio, preocupacio, decepcio, inseguretat, satisfaccio, agraiment, il·lusio, tranquil·litat, cansament). MAI un terme més fort que el text: una queixa d\'horaris és "malestar" o "frustracio", NO "fastic" ni "ira".\n- Si el fragment és una PROPOSTA o crítica racional sense càrrega emocional, etiqueta\'l "proposta_de_millora" (no és una emoció).\n- Si no hi ha ni emoció ni proposta, NO en treguis registre.\n- "cita": fragment COPIAT LITERALMENT (mínim 5 paraules); "linia": número o interval; "valencia": positiva|negativa|ambivalent; "intensitat": baixa|mitjana|alta; "metafora": la metàfora literal si n\'hi ha (si no, cadena buida).\n\nRespon NOMÉS JSON: {"emocions":[{"doc":"ID","linia":"n","cita":"...","etiqueta":"...","valencia":"...","intensitat":"...","metafora":""}]}\n\n'+textLot, true);
+    }), 3, ()=>{ fets++; if(progres) progres('detectant: lot '+fets+'/'+lots.length); });
+    /* Verificació anti-invenció: cada cita ha d'existir literalment */
+    const registres = [];
+    resultats.filter(Boolean).forEach(r=> (r.emocions||[]).forEach(e=>{
+      const doc = estat.docs.find(d=>d.id===String(e.doc).trim());
+      if(!doc || !e.cita) return;
+      const loc = trobaCita(doc, String(e.cita), e.linia);
+      if(loc) registres.push({doc:doc.id, linia:(loc.fi>loc.ini? loc.ini+'-'+loc.fi : String(loc.ini)), cita:loc.text.replace(/\n/g,' '), etiqueta:normalitza(String(e.etiqueta||'')).replace(/\s+/g,'_'), valencia:String(e.valencia||''), intensitat:String(e.intensitat||''), metafora:String(e.metafora||'')});
+    }));
+    if(!registres.length) throw new Error('No s\'ha detectat cap expressió emocional verificable.');
+    /* Passada 2: SEGON AGENT revisor — cada etiqueta, proporcionada al text o corregida/descartada */
+    const blocsR = [];
+    for(let i=0; i<registres.length; i+=55) blocsR.push(registres.slice(i,i+55).map((r,j)=>({i:i+j, c:r.cita.slice(0,150), e:r.etiqueta})));
+    let fetsR = 0;
+    const revisions = await grup(blocsR.map(bloc => async ()=> cridaLLM('Ets un SEGON AGENT revisor d\'etiquetes emocionals, independent del primer. REGLA D\'OR: l\'etiqueta ha de ser PROPORCIONADA al llenguatge literal de la cita; mai més forta (una queixa organitzativa és "malestar" o "frustracio", mai "fastic"). Si la cita és una proposta o crítica racional sense càrrega emocional → "proposta_de_millora". Si no hi ha res emocional ni cap proposta → "descarta".\n\nRegistres {i, c(ita), e(tiqueta del 1r agent)}:\n'+JSON.stringify(bloc)+'\n\nRespon NOMÉS JSON: {"rev":[{"i":0,"e":"etiqueta_final"}]} (terme català proporcionat, o "proposta_de_millora", o "descarta").', true)), 3, ()=>{ fetsR++; if(progres) progres('segon agent revisant: bloc '+fetsR+'/'+blocsR.length); });
+    let reetiquetades = 0, descartades = 0;
+    revisions.filter(Boolean).forEach(r=> (r.rev||[]).forEach(x=>{
+      const reg = registres[x.i]; if(!reg) return;
+      const eF = normalitza(String(x.e||'')).replace(/\s+/g,'_');
+      if(!eF || eF==='descarta'){ reg._fora = true; descartades++; return; }
+      if(eF !== reg.etiqueta){ reg.etiqueta1r = reg.etiqueta; reg.etiqueta = eF; reetiquetades++; }
+    }));
+    const nets = registres.filter(r=>!r._fora);
+    if(!nets.length) throw new Error('El segon agent ha descartat tots els registres.');
+    /* Passada 3: consolidació en categories que EMERGEIXEN de les dades (mai categories absents) */
+    if(progres) progres('consolidant categories emergents…');
+    const comptes = {};
+    nets.forEach(r=>{ comptes[r.etiqueta] = comptes[r.etiqueta] || {n:0, ex:[]}; comptes[r.etiqueta].n++; if(comptes[r.etiqueta].ex.length<2) comptes[r.etiqueta].ex.push(r.cita.slice(0,110)); });
+    const respC = await cridaLLM('Consolida aquestes etiquetes emocionals en 4-8 CATEGORIES que emergeixin de les dades, amb noms catalans PROPORCIONATS i descriptius del contingut real (exemples d\'estil: "malestar_per_l_organitzacio_temporal", "agraiment_al_professorat", "coses_a_millorar"). "proposta_de_millora" ha d\'anar a la categoria pròpia "coses_a_millorar". MAI creïs una categoria sense etiquetes reals assignades.\n\nEtiquetes (nom: recompte | exemples):\n'+Object.entries(comptes).map(([et,c])=>'- '+et+': '+c.n+' | '+c.ex.join(' · ')).join('\n').slice(0,9000)+'\n\nRespon NOMÉS JSON: {"categories":[{"nom":"...","definicio":"...","etiquetes":["..."]}]}', true);
+    const mapa = {};
+    (respC.categories||[]).forEach(cat=>{ (cat.etiquetes||[]).forEach(et=>{ mapa[normalitza(String(et)).replace(/\s+/g,'_')] = normalitza(String(cat.nom)).replace(/\s+/g,'_'); }); });
+    nets.forEach(r=>{ r.categoria = mapa[r.etiqueta] || r.etiqueta; });
+    /* CSV amb traçabilitat dels dos agents */
+    const q = v=>'"'+String(v).replace(/"/g,'""')+'"';
+    const csv = '﻿'+[['Participant','Línia','Categoria','Etiqueta (revisada)','Etiqueta 1r agent (si canvi)','València','Intensitat','Metàfora','Citació literal'].map(q).join(';'),
+      ...nets.map(r=>[r.doc,r.linia,r.categoria.replace(/_/g,' '),r.etiqueta.replace(/_/g,' '),(r.etiqueta1r||'').replace(/_/g,' '),r.valencia,r.intensitat,r.metafora,r.cita].map(q).join(';'))].join('\r\n');
+    /* Passada 4: síntesi — NOMÉS del que apareix a les dades */
+    if(progres) progres('redactant la síntesi…');
+    const perCat = {};
+    nets.forEach(r=>{ (perCat[r.categoria] = perCat[r.categoria]||[]).push(r); });
+    const mostres = Object.entries(perCat).sort((a,b)=>b[1].length-a[1].length).map(([cat, rs])=>
+      '## '+cat.replace(/_/g,' ').toUpperCase()+' ('+rs.length+' expressions, '+new Set(rs.map(r=>r.doc)).size+' participants)\n'+
+      rs.slice(0,4).map(r=>'«'+r.cita+'» ('+r.doc+', l. '+r.linia+') ['+r.etiqueta.replace(/_/g,' ')+', valència '+r.valencia+(r.metafora?', metàfora: '+r.metafora:'')+']').join('\n')
+    ).join('\n\n');
+    const sintesi = await cridaLLM('Ets un investigador qualitatiu. Redacta l\'ANÀLISI EMOCIONAL del corpus ('+docsActius().length+' participants; '+nets.length+' expressions verificades i revisades per un segon agent independent) seguint Gibbs (cap. 5). NORMES INNEGOCIABLES: informa NOMÉS de les categories presents al material (mai n\'afegeixis de teòriques que no apareixen); noms i adjectius proporcionats al llenguatge real dels informants; llenguatge qualitatiu ("una minoria", "bona part"), cap percentatge. Estructura: ## Panorama emocional · ## un apartat per categoria (interpreta, 2-3 cites amb (DOC, l. N)) · ## Metàfores i retòrica (només si n\'hi ha de reals) · ## Implicacions per a la pregunta de recerca ('+(estat.projecte.pregunta||'exploratòria')+').\n\nMATERIAL:\n'+mostres.slice(0,11000)+NORMES_MD, false);
+    const fonts = '\n\n## Fonts del mètode\n\n- Emocions i metàfores com a portadores de significat en dades qualitatives: **Gibbs (2012)**, *El análisis de datos cualitativos en investigación cualitativa* (cap. 5, pas 6 del procediment narratiu; cap. 7 per a la revisió independent).\n- Taxonomia de referència de les emocions bàsiques: **Plutchik (1980)**.\n- Lèxic d\'associació paraula–emoció NRC (EmoLex): **Mohammad & Turney (2013)**.\n- La metàfora com a estructura de la conceptualització: **Lakoff & Johnson (1980)**.\n\n*Les categories d\'aquest informe emergeixen de les teves dades (cap taxonomia imposada): un primer agent detecta amb etiquetes proporcionades al text literal i un segon agent independent revisa cada etiqueta abans de la síntesi (patró de supervisió de Gibbs, cap. 7).*';
+    const md = '> Doble agent: '+registres.length+' expressions detectades → '+reetiquetades+' etiquetes corregides i '+descartades+' descartades pel segon agent → '+nets.length+' de finals. Etiquetes proporcionades al text; categories emergents de les dades.\n\n'+sintesi+fonts;
+    return {md, csv};
+  }},
+
+ {clau:'apriori', titol:'Codificació a priori (guiada per conceptes)', cap:'Cap. 4',
+  llibre:'Codificació «guiada per conceptes»: es parteix d\'un marc previ (teoria, literatura, preguntes de l\'entrevista) en lloc de deixar emergir els codis. Gibbs recorda que els dos enfocaments «no són exclusius» i que no cal apegar-se als codis inicials.',
+  obtens:'El corpus recodificat contra el teu marc de conceptes: evidència literal per concepte i buits (conceptes sense evidència).',
+  requereix:'corpus',
+  marc:'El teu marc de conceptes (un per línia; buit = es deriva de la pregunta de recerca)',
+  marcPh:'motivació intrínseca&#10;càrrega cognitiva&#10;pertinença al grup',
+  executa: async (progres, marcText)=>{
+    let marc = (marcText||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    if(!marc.length){
+      if(progres) progres('derivant el marc de conceptes de la pregunta…');
+      const r = await cridaLLM('Proposa un marc de 5-8 conceptes teòrics per codificar a priori (Gibbs cap. 4) un corpus sobre: '+(estat.projecte.pregunta||'experiència formativa d\'estudiants')+'. Respon NOMÉS JSON: {"conceptes":["concepte — definició breu", ...]}', true);
+      marc = r.conceptes||[];
+    }
+    const mostra = ctxCorpusMostra(8500);
+    return cridaLLM('Ets un investigador qualitatiu fent CODIFICACIÓ A PRIORI (guiada per conceptes, Gibbs cap. 4) amb aquest marc:\n'+marc.map(c=>'- '+c).join('\n')+'\n\nRecodifica el material següent contra el marc: per cada concepte, l\'evidència literal trobada (cites amb (DOC, l. N)); després "## Conceptes sense evidència" (buits del marc: què no apareix a les dades) i "## El que el marc no captura" (contingut rellevant que queda fora — candidats a codis emergents).\n\n'+mostra.text+'\n\n(Mostra de '+mostra.inclosos+' documents de '+docsActius().length+'.)'+NORMES_MD, false);
+  }},
+
+ {clau:'dimensions', titol:'Propietats i dimensions', cap:'Cap. 6 · Recuadros 6.2–6.3',
+  llibre:'Dimensionalitzar els codis en continus: «freqüència, durada, abast, intensitat, quantitat, manera» (Recuadro 6.2). Després, «ordenar parcialment» els casos per una columna dimensionalitzada i escanejar patrons per files i columnes (Recuadro 6.3, Miles & Huberman).',
+  obtens:'Els codis principals convertits en dimensions (de… a…), els casos situats al continu i els patrons que emergeixen en ordenar-los.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Ets un investigador qualitatiu aplicant PROPIETATS I DIMENSIONS (Gibbs cap. 6, Recuadros 6.2-6.3). Per als 4-6 codis amb més evidència: 1) defineix les seves dimensions en continu (p. ex. intensitat: de lleu a greu; abast: de puntual a general); 2) situa els casos citats al continu amb la seva cita; 3) ordena\'ls parcialment (Miles & Huberman) i descriu els patrons que apareixen en llegir la taula ordenada; 4) apartat "## Preguntes analítiques" que aquesta ordenació obre.\n\n'+ctxTemes(3)+NORMES_MD, false)},
+
+ {clau:'memos_nt', titol:'Memos teòrics (NT)', cap:'Cap. 3 · Recuadro 3.2',
+  llibre:'«L\'escriptura és anàlisi: escriu aviat i sovint.» Els memos teòrics (NT, Richardson) registren hunches, hipòtesis, connexions i crítiques — marcant sempre què és hunch i què és evidència. Usos (Recuadro 3.2): idea nova per a un codi, sorpreses, hipòtesis alternatives, qüestionar el marc analític.',
+  obtens:'Un joc de memos teòrics ancorats: hipòtesis de treball, sorpreses, connexions entre temes i crítiques al propi marc.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Ets un investigador qualitatiu escrivint MEMOS TEÒRICS (NT) segons Gibbs (cap. 3, Recuadro 3.2). A partir del material, escriu 6-10 memos numerats. Cada memo: títol curt, tipus d\'ús del Recuadro 3.2 (idea per a un codi / hunch / anàlisi integrativa / sorpresa / hipòtesi alternativa / crítica al marc), el memo en si (3-6 frases marcant explícitament què és HUNCH i què és EVIDÈNCIA), i la cita o cites que l\'ancoren amb (DOC, l. N).\n\n'+ctxTemes(2)+NORMES_MD, false)},
+
+ {clau:'auditoria', titol:'Auditoria de qualitat de l\'informe', cap:'Cap. 7 · Recuadros 7.1–7.2',
+  llibre:'«Encara que no hi hagi una veritat absoluta, pot haver-hi error.» Validesa via triangulació, validació de l\'entrevistat i casos negatius; el checklist de citacions (Recuadro 7.2) i el rastre d\'auditoria reflexiu (Recuadro 7.1, Brewer). Vigilar l\'anecdotisme selectiu i la deriva de definició.',
+  obtens:'Revisió crítica de l\'informe: sobre-generalitzacions, compliment del checklist de citacions, riscos de validesa i el rastre reflexiu esbossat.',
+  requereix:'informe',
+  executa: async ()=> cridaLLM('Ets un auditor de qualitat qualitativa (Gibbs cap. 7). Audita aquest informe: 1) ## Sobre-generalitzacions i anecdotisme — llista frases problemàtiques (absoluts, generalitzacions sense matís) amb la reescriptura proposada; 2) ## Checklist de citacions (Recuadro 7.2) — les cites estan contextualitzades i interpretades? excedeixen el 50% del text?; 3) ## Riscos de validesa — què caldria triangular o sotmetre a validació de l\'entrevistat, i quins casos negatius falten; 4) ## Rastre d\'auditoria reflexiu (Recuadro 7.1) — esbossa les respostes que l\'investigador hauria de completar (marc teòric, què va quedar sense investigar, relacions de poder, contradiccions de les dades).\n\nINFORME:\n'+(estat.informe||'').slice(0,9000)+NORMES_MD, false)},
+
+ {clau:'braun_clarke', titol:'Anàlisi temàtica reflexiva', cap:'Braun & Clarke (2006; 2019)',
+  llibre:'L\'altra gran tradició al costat de Gibbs. Braun & Clarke (2006) defineixen 6 fases i distingeixen codis SEMÀNTICS (superfície del que es diu) i LATENTS (significats subjacents). A la versió reflexiva (2019; 2021) insisteixen que un tema és un «patró de significat compartit al voltant d\'un concepte central», NO un resum de domini («coses que van dir dels horaris» no és un tema), i que la subjectivitat de l\'analista és un recurs a documentar, no un biaix a eliminar.',
+  obtens:'Els teus temes reexaminats: quins són només resums de domini, la lectura latent de cada un, el concepte central que els organitza i notes de reflexivitat.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Ets un expert en ANÀLISI TEMÀTICA REFLEXIVA (Braun & Clarke 2006, 2019, 2021). Reexamina aquests temes: 1) ## Tema o resum de domini? — per cada tema, digues si és un veritable patró de significat compartit o només un resum de domini, i com reformular-lo si cal; 2) ## Lectura semàntica vs latent — què diuen literalment i quin significat subjacent (latent) s\'hi pot llegir, ancorat a cites; 3) ## Concepte central — quin concepte organitzador travessa el conjunt; 4) ## Notes de reflexivitat — quines decisions interpretatives ha pres l\'analista i com poden haver modelat els temes (subjectivitat com a recurs, no com a biaix).\n\n'+ctxTemes(2)+NORMES_MD, false)},
+
+ {clau:'framework', titol:'Framework Analysis (matriu de charting)', cap:'Ritchie & Spencer (1994); Gale et al. (2013)',
+  llibre:'El mètode estàndard en recerca aplicada i de salut: després de codificar, es «charteja» una MATRIU casos × temes on cada cel·la resumeix (condensant, preservant el llenguatge de l\'informant) el que aquell cas diu d\'aquell tema. Permet comparar sistemàticament dins del cas i entre casos, i és el pas previ al mapping i la interpretació (Gale et al., 2013, BMC Medical Research Methodology).',
+  obtens:'La matriu de charting amb els casos amb més evidència, resums per cel·la fidels al llenguatge original i un memo analític per tema.',
+  requereix:'codis',
+  executa: async ()=>{
+    const casos = [...new Set(Object.values(estat.codis).flatMap(c=>(c.citacions||[]).map(ci=>ci.cas)))].slice(0,12);
+    const material = casos.map(cas=>{
+      const d = estat.docs.find(x=>x.id===cas);
+      return d ? '### '+cas+'\n'+d.linies.map((l,i)=>(i+1)+' '+l).join('\n') : '';
+    }).join('\n\n').slice(0,9000);
+    return cridaLLM('Ets un investigador aplicant FRAMEWORK ANALYSIS (Ritchie & Spencer 1994; Gale et al. 2013). Temes del marc:\n'+Object.entries(estat.codis).filter(([,c])=>c.tipus==='categoria').map(([n,t])=>'- '+n+': '+t.definicio).join('\n')+'\n\nFes el CHARTING: 1) ## Matriu casos × temes — una taula Markdown amb els casos com a files i els temes com a columnes; cada cel·la un resum condensat que preservi el llenguatge de l\'informant, amb (CAS, l. N); cel·la buida si el cas no en parla (mai omplir per omplir); 2) ## Memos analítics — un paràgraf per tema llegint la columna (semblances, contrastos, casos atípics).\n\nMATERIAL ('+casos.length+' casos):\n'+material+NORMES_MD, false);
+  }},
+
+ {clau:'cerqual', titol:'Confiança per troballa (GRADE-CERQual)', cap:'Lewin et al. (2015; 2018)',
+  llibre:'L\'estàndard per graduar la confiança en troballes de síntesis qualitatives (adoptat per l\'OMS i Cochrane). Cada troballa es valora en 4 components: limitacions metodològiques, coherència (les dades sostenen la troballa sense contradiccions inexplicades?), adequació (prou dades riques?) i rellevància — i rep una confiança ALTA / MODERADA / BAIXA / MOLT BAIXA amb justificació explícita.',
+  obtens:'Cada tema del teu corpus valorat amb els 4 components CERQual i un nivell de confiança justificat — el llenguatge que esperen els revisors.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Ets un metodòleg aplicant GRADE-CERQual (Lewin et al. 2015, 2018). Per cada TEMA: valora\'n 1) limitacions metodològiques (dades d\'enquesta oberta, sense repreguntes), 2) coherència (hi ha cites que el contradiuen?), 3) adequació (quantitat i riquesa de dades: quantes cites i com de riques), 4) rellevància per a la pregunta ('+(estat.projecte.pregunta||'exploratòria')+'). Conclou cada tema amb ## Confiança: ALTA/MODERADA/BAIXA/MOLT BAIXA i la justificació en 2 frases, citant exemples (DOC, l. N). Acaba amb ## Taula resum (tema | confiança | motiu principal).\n\n'+ctxTemes(2)+NORMES_MD, false)},
+
+ {clau:'member_checking', titol:'Member checking (validació dels participants)', cap:'Birt et al. (2016); Lincoln & Guba (1985)',
+  llibre:'Per a Lincoln & Guba la validació amb els participants és «la tècnica més crucial per establir credibilitat». Birt et al. (2016) en sistematitzen el com: retornar als participants una síntesi comprensible dels resultats i recollir si s\'hi reconeixen, què matisarien i què falta — abans de donar l\'anàlisi per tancada.',
+  obtens:'Un document llest per enviar: síntesi per tema en llenguatge planer (sense argot) + formulari de validació (m\'hi reconec / matisaria / hi falta) per recollir les respostes.',
+  requereix:'codis',
+  executa: async ()=> cridaLLM('Prepara un MEMBER CHECKING (Birt et al. 2016; Lincoln & Guba 1985) per retornar als participants de l\'estudi. 1) ## Carta breu (3-4 frases, to proper, català planer: què hem fet i què els demanem); 2) ## Síntesi per validar — per cada tema, un paràgraf en llenguatge PLANER sense argot metodològic, amb 1 cita anònima il·lustrativa; 3) ## Formulari de validació — per cada tema, tres caselles: «M\'hi reconec / Ho matisaria (com?) / Hi falta alguna cosa (què?)»; 4) ## Instruccions per a l\'investigador — com registrar i integrar les respostes (canvis al codebook i a l\'informe).\n\n'+ctxTemes(1)+NORMES_MD, false)},
+
+ {clau:'trustworthiness', titol:'Confiabilitat (Lincoln & Guba)', cap:'Lincoln & Guba (1985)',
+  llibre:'El marc clàssic de rigor naturalista, paral·lel a la validesa quantitativa: CREDIBILITAT (⇄ validesa interna: triangulació, member checking, casos negatius), TRANSFERIBILITAT (⇄ externa: descripció densa del context), DEPENDABILITAT (⇄ fiabilitat: rastre d\'auditoria) i CONFIRMABILITAT (⇄ objectivitat: les troballes surten de les dades, no de l\'analista). És el llenguatge de rigor que moltes revistes demanen explícitament.',
+  obtens:'Auditoria del teu projecte contra els 4 criteris: què ja compleixes (amb evidència), què falta i les accions concretes per tancar cada buit.',
+  requereix:'informe',
+  executa: async ()=> cridaLLM('Ets un auditor metodològic aplicant els criteris de CONFIABILITAT de Lincoln & Guba (1985). Context del projecte: corpus de '+docsActius().length+' respostes obertes; codificació per dos agents LLM independents amb cites verbatim verificades automàticament; adjudicació humana per cita; temes emergents; informe redactat. Per cada criteri — ## Credibilitat, ## Transferibilitat, ## Dependabilitat, ## Confirmabilitat — digues: (a) què ja compleix aquest projecte (amb l\'evidència concreta), (b) què hi falta, (c) 2-3 accions concretes per tancar el buit (triangulació de mètodes, descripció densa del context, member checking…). Acaba amb ## Taula resum (criteri | estat | acció prioritària).\n\nINFORME ACTUAL:\n'+(estat.informe||'').slice(0,7000)+NORMES_MD, false)},
+
+ {clau:'coreq', titol:'Checklist COREQ + declaració d\'ús d\'IA', cap:'Tong et al. (2007); Morgan (2023)',
+  llibre:'COREQ (Tong, Sainsbury & Craig, 2007) és el checklist de 32 ítems que la majoria de revistes exigeixen per publicar recerca qualitativa (equip, mètodes, anàlisi i resultats); SRQR (O\'Brien et al., 2014) n\'és l\'alternativa. A més, la literatura recent sobre QDA assistida per LLM (Morgan, 2023; De Paoli, 2024) demana transparència: declarar quins models s\'han usat, per a què, i com s\'ha garantit la supervisió humana.',
+  obtens:'El checklist COREQ amb els ítems d\'anàlisi ja emplenats des del que l\'app sap del teu procés, els ítems que has d\'omplir tu marcats amb <OMPLIR>, i el paràgraf de declaració d\'IA llest per als Mètodes.',
+  requereix:'informe',
+  executa: async ()=> cridaLLM('Genera el CHECKLIST COREQ (Tong et al. 2007, 32 ítems, dominis 1-3) per a aquest estudi. FETS CONEGUTS del procés (usa\'ls per emplenar els ítems que en depenen): corpus de '+docsActius().length+' respostes obertes; anàlisi temàtica amb codificació oberta assistida per LLM (DeepSeek deepseek-chat com a codificador primari, revisió per segon agent independent); cada cita verificada literalment contra la font per programari; adjudicació humana per cita; '+Object.keys(estat.codis).length+' entrades al codebook; temes derivats de les dades; programari: analitzador HTML MM-46 (QDA-Gibbs). Format: ## Domini 1/2/3 amb taula (ítem | nº | resposta); els ítems que només l\'autor pot saber (característiques de l\'equip, relació amb participants, mostreig), posa-hi <OMPLIR>. Acaba amb ## Declaració d\'ús d\'IA per als Mètodes — un paràgraf sobri (Morgan 2023; De Paoli 2024): models usats i per a què, verificació verbatim automàtica, doble agent, adjudicació humana final, i que la interpretació és responsabilitat dels autors.'+NORMES_MD, false)},
+];
+
+async function executaLlibre(clau){
+  if(ocupatLlibre || analitzant) { alert('Espera que acabi l\'anàlisi en curs.'); return; }
+  const a = CATALEG.find(x=>x.clau===clau);
+  // Llegeix el quadre de text ABANS de repintar (el repintat l'esborraria)
+  const marcText = a.marc ? (document.getElementById('marc-'+clau)?.value||'') : undefined;
+  ocupatLlibre = true; window.__clausRun = clausClassificades(); pintaLlibre();
+  const progres = msg => { const el = document.getElementById('estat-'+clau); if(el) el.textContent = '⟳ '+msg; };
+  progres('treballant…');
+  try{
+    const res = await a.executa(progres, marcText);
+    const md = typeof res === 'string' ? res : res.md;
+    estat.analisis[clau] = {titol:a.titol, md: verificaCitesMd(md), csv: (typeof res==='object' && res.csv) || null, data:avui()};
+    desa();
+  }catch(e){
+    alert('L\'anàlisi «'+a.titol+'» ha fallat: '+e.message);
+  }finally{
+    ocupatLlibre = false; window.__clausRun = null; pintaLlibre();
+  }
+}
+
+function pintaLlibre(){
+  const teCodis = Object.keys(estat.codis).length>0, teCorpus = estat.docs.length>0, teInforme = !!estat.informe;
+  $('zona-llibre').innerHTML = CATALEG.map(a=>{
+    const apte = a.requereix==='codis' ? teCodis : a.requereix==='informe' ? teInforme : teCorpus;
+    const motiu = a.requereix==='codis' ? 'Primer fes l\'anàlisi automàtica (pestanya 1).' :
+                  a.requereix==='informe' ? 'Primer cal l\'informe (pestanya 1).' : 'Primer puja el corpus (pestanya 1).';
+    const fet = estat.analisis[a.clau];
+    return `<div class="caixa">
+      <h2>${esc(a.titol)} <span class="pill categoria">${esc(a.cap)}</span></h2>
+      <div class="nota" style="margin-bottom:6px;"><b>Què diu el llibre:</b> ${esc(a.llibre)}</div>
+      <div class="nota"><b>Què obtindràs:</b> ${esc(a.obtens)}</div>
+      ${a.links ? '<div class="nota"><b>Instruments externs (GitHub):</b> '+a.links.map(l=>`<a href="${l[1]}" target="_blank" style="color:var(--accent);">${esc(l[0])}</a>`).join(' · ')+'</div>' : ''}
+      ${a.marc ? `<div style="margin-top:8px;"><label>${esc(a.marc)}</label><textarea id="marc-${a.clau}" rows="3" placeholder="${a.marcPh||''}"></textarea></div>` : ''}
+      <div class="accions">
+        <button class="b" onclick="executaLlibre('${a.clau}')" ${(!apte||ocupatLlibre)?'disabled':''}>${fet?'↻ Torna a aplicar-la':'▶ Aplica-la ara'}</button>
+        ${fet? `<button class="b sec" onclick="baixaLlibre('${a.clau}','doc')">Word</button>
+                <button class="b sec" onclick="baixaLlibre('${a.clau}','md')">Markdown</button>` : ''}
+        ${fet && fet.csv ? `<button class="b sec" onclick="baixaLlibre('${a.clau}','csv')">CSV (Excel)</button>` : ''}
+        ${fet? `<button class="b sec" onclick="revisaLlibre('${a.clau}')" ${ocupatLlibre?'disabled':''}>🔍 Segon agent</button>` : ''}
+        <span class="nota" id="estat-${a.clau}">${!apte? motiu : fet? 'Feta el '+fet.data+'.' : ''}</span>
+      </div>
+      ${fet? `<details style="margin-top:10px;" open><summary style="cursor:pointer; color:var(--accent-fosc); font-weight:600;">Mostra el resultat</summary><div class="md-render" style="margin-top:8px;">${linkifica(mdAHtml(fet.md))}</div></details>` : ''}
+      ${fet && fet.revisio? `<div class="caixa-revisio"><b>🔍 Revisió del segon agent (${esc(fet.revisio.data)})</b><div class="md-render" style="margin-top:6px;">${linkifica(mdAHtml(fet.revisio.md))}</div></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* — Segon agent genèric: revisió escèptica de qualsevol anàlisi feta — */
+async function revisaLlibre(clau){
+  if(ocupatLlibre || analitzant){ alert('Espera que acabi l\'anàlisi en curs.'); return; }
+  const fet = estat.analisis[clau]; if(!fet) return;
+  ocupatLlibre = true; window.__clausRun = clausClassificades(); pintaLlibre();
+  const el = document.getElementById('estat-'+clau); if(el) el.textContent = '⟳ segon agent revisant…';
+  try{
+    const mostra = ctxCorpusMostra(6000);
+    const md = await cridaLLM('Ets un SEGON AGENT revisor, independent i escèptic (supervisió del mètode Gibbs, cap. 7). Revisa aquesta anàlisi CONTRA el material original. REGLA D\'OR: cap etiqueta ni afirmació pot ser més forta que el llenguatge literal de les dades; si una categoria no apareix realment a les dades, s\'ha de retirar. Estructura: 1) ## Etiquetes o classificacions desproporcionades — on el terme usat és més fort/dèbil que el text (cita el fragment amb (DOC, l. N) i proposa el terme proporcionat); 2) ## Afirmacions sense suport o anecdotisme; 3) ## El que aguanta bé; 4) ## Correccions proposades, concretes i aplicables. Sigues dur però just.\n\nANÀLISI A REVISAR:\n'+fet.md.slice(0,9000)+'\n\nMATERIAL ORIGINAL (mostra de '+mostra.inclosos+' de '+estat.docs.length+' documents):\n'+mostra.text+NORMES_MD, false);
+    fet.revisio = {md: verificaCitesMd(md), data: avui()};
+    desa();
+  }catch(e){ alert('La revisió del segon agent ha fallat: '+e.message); }
+  finally{ ocupatLlibre = false; window.__clausRun = null; pintaLlibre(); }
+}
+
+function baixaLlibre(clau, format){
+  const fet = estat.analisis[clau]; if(!fet) return;
+  if(format==='md') return descarrega('analisi_'+clau+'.md', fet.md, 'text/markdown;charset=utf-8');
+  if(format==='csv') return descarrega('analisi_'+clau+'.csv', fet.csv, 'text/csv;charset=utf-8');
+  const doc = '<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:Arial; font-size:12pt; text-align:justify; line-height:1.5;} h1,h2,h3{color:#0f3b6e;} blockquote{background:#fef3c7; padding:6pt 10pt; margin:8pt 0;}</style></head><body>'+mdAHtml(fet.md)+'</body></html>';
+  descarrega('analisi_'+clau+'.doc', '﻿'+doc, 'application/msword');
+}
+
+/* ─────────────────────────── EXPORTACIONS ─────────────────────────── */
+function descarrega(nom, contingut, mime){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([contingut], {type:mime||'text/plain;charset=utf-8'}));
+  a.download = nom; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+$('ex-projecte').onclick = ()=>{
+  const p = estat.projecte;
+  descarrega('projecte.json', JSON.stringify({
+    nom: p.nom || 'projecte_qda', corpus_origen: '(pujat via analitzador HTML MM-46)',
+    data_creacio: avui(), pregunta_recerca: p.pregunta, proposit: p.proposit || p.pregunta,
+    enfocament_codificacio: p.enfocament, fase_actual: 5,
+    gates: {gate_0:!!p.pregunta, gate_1:estat.docs.length>0, gate_2:false, gate_3:Object.keys(estat.codis).length>0, gate_4:Object.values(estat.codis).some(c=>c.pare!=='(arrel)'), gate_5:estat.taulaFeta, gate_6:false, gate_7:false},
+    llengua_artefactes: 'catala'
+  }, null, 2), 'application/json');
+};
+$('ex-codebook').onclick = ()=> descarrega('codebook.json', JSON.stringify({
+  _doc: 'Cada codi: etiqueta, tipus, pare, definicio, citacions ancorades.',
+  codis: estat.codis
+}, null, 2), 'application/json');
+$('ex-trans').onclick = ()=>{
+  if(!estat.docs.length){ alert('Cap document.'); return; }
+  estat.docs.forEach(d=> descarrega(d.id+'.txt', d.linies.map((l,i)=>(i+1)+' '+l).join('\n')+'\n'));
+};
+$('ex-codebook-csv').onclick = ()=>{
+  const q = v => '"'+String(v).replace(/"/g,'""')+'"';
+  const files = [['Tema','Codi','Tipus','Definició','Participant','Línia','Adjudicació humana','Citació literal'].map(q).join(';')];
+  Object.entries(estat.codis).forEach(([et,c])=>{
+    if(c.tipus==='categoria') return;
+    const tema = c.pare && c.pare!=='(arrel)' ? c.pare : '';
+    const cites = c.citacions && c.citacions.length ? c.citacions : [{text:'',cas:'',linia:''}];
+    cites.forEach(ci=> files.push([tema, et, c.tipus, c.definicio||'', ci.cas, ci.linia, ci.rev==='ok'?'acceptada':ci.rev==='no'?'rebutjada':'pendent', ci.text.replace(/\n/g,' ')].map(q).join(';')));
+  });
+  descarrega('codis_i_cites.csv', '﻿'+files.join('\r\n'), 'text/csv;charset=utf-8');
+};
+
+/* Paquet complet */
+$('ex-paquet').onclick = ()=> descarrega((estat.projecte.nom||'projecte_qda')+'_paquet.json', JSON.stringify(estat, null, 2), 'application/json');
+$('im-paquet').onclick = ()=> $('fitxer-paquet').click();
+$('fitxer-paquet').onchange = async ()=>{
+  const f = $('fitxer-paquet').files[0]; if(!f) return;
+  try{
+    const nou = JSON.parse(await f.text());
+    if(!nou.docs || !nou.codis) throw new Error('no és un fitxer de sessió vàlid');
+    estat = Object.assign({projecte:{},docs:[],codis:{},informe:'',analisis:{},descartades:0,taulaFeta:false}, nou);
+    estat.analisis = estat.analisis || {};
+    taulaDades = null;
+    desa(); refresca(); alert('Sessió recuperada: '+estat.docs.length+' documents i '+Object.keys(estat.codis).length+' codis.');
+  }catch(e){ alert('No s\'ha pogut carregar: '+e.message); }
+  $('fitxer-paquet').value='';
+};
+function esborraProjecte(){
+  if(analitzant || ocupatLlibre){ alert('Espera que acabi l\'anàlisi en curs.'); return; }
+  if(!confirm('Netejar TOT (fitxer, codis, informe i anàlisis) per començar un tema nou?\n\nLes claus del motor es conserven. Si vols guardar la feina, primer fes «Desa-ho tot en un fitxer» (pestanya 5).')) return;
+  estat = {projecte:{nom:'',pregunta:'',proposit:'',enfocament:'mixt'}, docs:[], codis:{}, informe:'', analisis:{}, descartades:0, taulaFeta:false};
+  taulaDades = null; ultimResum = '';
+  localStorage.removeItem(CLAU_LS);
+  refresca();
+}
+$('btn-esborra').onclick = esborraProjecte;
+$('btn-neteja-tot').onclick = esborraProjecte;
+
+/* ─────────────────────────── REFRESC GLOBAL ─────────────────────────── */
+function refresca(){
+  $('compta-docs').textContent = estat.docs.length ? '· '+estat.docs.length : '';
+  $('avis-ok').style.display = estat.docs.length ? '' : 'none';
+  const atrs = atributsDisponibles();
+  $('sel-atribut').innerHTML = atrs.length ? atrs.map(a=>`<option>${esc(a)}</option>`).join('') : '<option value="">(cap atribut detectat al fitxer)</option>';
+  // Abast i instruccions (dos moments sincronitzats: inici i anàlisis a aplicar)
+  const opcionsAbast = ['<option value="">Tots els participants ('+estat.docs.length+')</option>'];
+  atrs.forEach(a=>{
+    [...new Set(estat.docs.map(d=>(d.atributs||{})[a]).filter(Boolean))].sort().forEach(v=>{
+      const n = estat.docs.filter(d=>(d.atributs||{})[a]===v).length;
+      opcionsAbast.push('<option value="'+esc(a+'='+v)+'">'+esc(a)+': '+esc(v)+' ('+n+')</option>');
+    });
+  });
+  document.querySelectorAll('.sel-abast').forEach(s=>{ s.innerHTML = opcionsAbast.join(''); s.value = estat.projecte.abast||''; });
+  document.querySelectorAll('.inp-instr').forEach(i=>{ i.value = estat.projecte.instruccions||''; });
+  $('llista-docs-mini').textContent = ultimResum || (estat.docs.length ? estat.docs.length+' documents carregats.' : '');
+  $('llista-docs').innerHTML = estat.docs.length ? estat.docs.map(d=>
+    `<div class="doc-item"><div><b>${esc(d.id)}</b> <span class="comptador">(${esc(d.nom)} · ${d.linies.length} línies)</span></div>
+     <button class="b perill" data-id="${esc(d.id)}" style="padding:2px 8px;">✕</button></div>`).join('')
+    : '<div class="buit">Encara no hi ha documents.</div>';
+  $('llista-docs').querySelectorAll('button').forEach(b=> b.onclick = ()=> eliminaDoc(b.dataset.id));
+
+  $('cfg-deepseek').value = cfg.deepseek; $('cfg-gemini').value = cfg.gemini;
+  $('cfg-proveidor').value = cfg.proveidor; $('cfg-auto').value = cfg.auto;
+  $('cfg-pregunta').value = estat.projecte.pregunta || '';
+
+  estat.analisis = estat.analisis || {};
+  refrescaBoto(); pintaInforme(); pintaCodis(); pintaTaula(); pintaLlibre();
+}
+
+// Escoltadors dels dos moments d'enfocament (sincronitzats via estat.projecte)
+document.addEventListener('input', e=>{
+  if(e.target.classList && e.target.classList.contains('inp-instr')){
+    estat.projecte.instruccions = e.target.value; desa();
+    document.querySelectorAll('.inp-instr').forEach(i=>{ if(i!==e.target) i.value = e.target.value; });
+  }
+});
+document.addEventListener('change', e=>{
+  if(e.target.classList && e.target.classList.contains('sel-abast')){
+    estat.projecte.abast = e.target.value; desa();
+    document.querySelectorAll('.sel-abast').forEach(s=>{ if(s!==e.target) s.value = e.target.value; });
+    refrescaBoto();
+  }
+});
+
+/* ─────────────────────────── PWA: instal·lació i offline ─────────────────────────── */
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+let promptInstal = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); promptInstal = e;
+  $('btn-instal').style.display = '';
+});
+$('btn-instal').onclick = async ()=>{
+  if(!promptInstal) return;
+  promptInstal.prompt();
+  await promptInstal.userChoice;
+  promptInstal = null; $('btn-instal').style.display = 'none';
+};
+window.addEventListener('appinstalled', ()=>{ $('btn-instal').style.display = 'none'; });
+
+carrega();
+refresca();
+
+/* Primer ús: si no hi ha cap clau, obre la configuració amb la benvinguda */
+if(!teClau()){
+  $('config-benvinguda').style.display = '';
+  setTimeout(()=>{ try{ $('dlg-config').showModal(); }catch(e){} }, 500);
+}
+</script>
+</body>
+</html>
