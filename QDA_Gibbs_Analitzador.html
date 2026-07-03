@@ -141,10 +141,21 @@
       <div class="fmts">.xlsx · .xls · .csv · .tsv · .txt · .md — tot es processa al teu ordinador</div>
     </div>
     <input type="file" id="fitxers" multiple accept=".txt,.md,.csv,.tsv,.xlsx,.xls" style="display:none">
-    <div id="avis-ok" style="display:none; border:1px solid var(--ok); background:#f0fdf4; border-radius:8px; padding:12px 14px; margin-top:12px;">
-      <b style="color:var(--ok);">✓ Fitxer llegit correctament — tot a punt.</b>
+    <div id="avis-ok" style="display:none; border:1px solid var(--ok); background:#f0fdf4; border-radius:8px; padding:14px 16px; margin-top:12px;">
+      <b style="color:var(--ok);">✓ Fitxer llegit — preparació de dades feta. Revisa el recompte i marca el check-list.</b>
       <div id="llista-docs-mini" class="nota" style="margin-top:4px;"></div>
-      <div class="nota" style="margin-top:4px;">Revisa que els participants i les columnes siguin els esperats i prem <b>▶ Fes l'anàlisi completa</b> per iniciar el procés.</div>
+      <details style="margin-top:8px;">
+        <summary style="cursor:pointer; color:var(--accent-fosc); font-weight:600; font-size:13px;">Què s'ha fet i per què (procés de preparació segons Gibbs, cap. 2)</summary>
+        <ol class="nota" style="margin:6px 0 0 18px; line-height:1.7;">
+          <li><b>Lectura i organització automàtica</b>: s'ha detectat quin full conté el text, quina columna identifica el participant, quines són les preguntes obertes i quins atributs de cas hi ha (p. ex. curs).</li>
+          <li><b>Numeració de línies</b> per document: és l'àncora que permet que cada cita porti participant + línia i es pugui verificar literalment (anti-invenció).</li>
+          <li><b>Recompte i registre de dades</b> (taula de sota): quantes files s'han llegit, quins participants no han contestat res (queden exclosos i llistats) i quantes respostes té cada pregunta — l'equivalent al «registre de dades» que Gibbs exigeix abans d'analitzar.</li>
+          <li><b>En prémer ▶</b>: la neteja «aprèn → aplica» detecta les variants de resposta buida («Cap», «NC»…) del teu corpus concret, repara accents trencats i ho deixa tot comptabilitzat al registre del progrés.</li>
+          <li><b>El check-list és el GATE de preparació</b>: com al mètode de Gibbs, no es passa a l'anàlisi fins que la preparació està verificada — incloent anonimat (cap. 2) i consentiment (cap. 1).</li>
+        </ol>
+      </details>
+      <div id="prep-informe"></div>
+      <div id="prep-checklist"></div>
     </div>
   </div>
 
@@ -415,12 +426,18 @@ document.querySelectorAll('#nav button').forEach(b=> b.onclick = ()=> vesA(b.dat
 
 function teClau(){ const p = clausClassificades(); return !!(p.deepseek || p.openrouter || p.gemini); }
 $('btn-config').onclick = ()=> $('dlg-config').showModal();
+function checklistOk(){
+  const p = estat.preparacio;
+  if(!p || !p.checklist) return true; // estats antics sense check-list
+  return Object.values(p.checklist).every(Boolean);
+}
 function refrescaBoto(){
-  $('btn-analitza').disabled = analitzant || !estat.docs.length || !teClau();
+  $('btn-analitza').disabled = analitzant || !estat.docs.length || !teClau() || !checklistOk();
   $('estat-boto').innerHTML = analitzant ? 'Anàlisi en marxa…'
     : !estat.docs.length ? 'Primer puja un fitxer.'
     : !teClau() ? '<span class="avis-vermell">Falta una clau API: obre ⚙ Configuració (a dalt a la dreta).</span>'
-    : '✓ ' + estat.docs.length + ' documents a punt. Prem el botó per iniciar l\'anàlisi.';
+    : !checklistOk() ? '<span class="avis-text">Marca els 4 punts del check-list de preparació (a l\'avís verd) per desbloquejar l\'anàlisi.</span>'
+    : '✓ ' + estat.docs.length + ' documents a punt i preparació verificada. Prem el botó per iniciar l\'anàlisi.';
 }
 
 /* ─────────────────────────── PUJADA DE FITXERS ─────────────────────────── */
@@ -438,6 +455,8 @@ async function processaFitxers(fitxers){
     try{
       if(ext==='txt' || ext==='md'){
         afegeixDocText(f.name, await f.text()); nousDocs = true;
+        estat.preparacio = {fitxer:f.name, filesTotals:null, docs:estat.docs.length, filesBuides:[], perPregunta:[],
+          checklist:{participants:false, columnes:false, anonimat:false, consentiment:false}};
       }else if(ext==='csv' || ext==='tsv'){
         const files = analitzaCSV(await f.text(), ext==='tsv' ? '\t' : null);
         if(await importaAuto(f.name, {'(únic)': files})) nousDocs = true;
@@ -459,7 +478,8 @@ async function processaFitxers(fitxers){
     }
   }
   desa(); refresca();
-  if(nousDocs && cfg.auto==='si' && teClau() && !analitzant) executaAnalisi();
+  // L'anàlisi (també l'automàtica) queda bloquejada fins que el check-list de preparació estigui marcat.
+  if(nousDocs && cfg.auto==='si' && teClau() && !analitzant && checklistOk()) executaAnalisi();
 }
 
 function assegAraXLSX(){
@@ -539,6 +559,7 @@ function detectaEstructura(files){
 }
 
 function importaFiles(nomFitxer, files, det){
+  const buides = [];
   const grups = new Map();
   files.slice(1).forEach((r,ix)=>{
     const clau = det.agrupa ? (r[det.colId]||'').trim() || 'sense_id'
@@ -564,7 +585,20 @@ function importaFiles(nomFitxer, files, det){
       });
     });
     if(linies.length){ afegeixDoc(idNet(clau), nomFitxer, 'taula', linies, atributs); afegits++; }
+    else buides.push(idNet(clau));
   });
+  // Informe de preparació (Gibbs, cap. 2: registre de dades) + check-list obligatori
+  estat.preparacio = {
+    fitxer: nomFitxer,
+    filesTotals: files.length - 1,
+    docs: afegits,
+    filesBuides: buides,
+    perPregunta: det.colsText.map(ci=>({
+      pregunta: det.caps[ci],
+      contestades: files.slice(1).filter(r=>String(r[ci]||'').trim()).length
+    })),
+    checklist: {participants:false, columnes:false, anonimat:false, consentiment:false}
+  };
   return afegits;
 }
 
@@ -653,6 +687,7 @@ $('map-ok').onclick = ()=>{
     grups.get(clau).push(r);
   });
 
+  let afegitsM = 0; const buidesM = [];
   grups.forEach((filesGrup, clau)=>{
     const linies = [];
     filesGrup.forEach(r=>{
@@ -663,8 +698,14 @@ $('map-ok').onclick = ()=>{
         val.split(/\r?\n/).forEach(l=>{ if(l.trim()) linies.push(l.trim()); });
       });
     });
-    if(linies.length) afegeixDoc(idNet(clau), mapCtx.nomFitxer, 'taula', linies);
+    if(linies.length){ afegeixDoc(idNet(clau), mapCtx.nomFitxer, 'taula', linies); afegitsM++; }
+    else buidesM.push(idNet(clau));
   });
+  estat.preparacio = {
+    fitxer: mapCtx.nomFitxer, filesTotals: files.length-1, docs: afegitsM, filesBuides: buidesM,
+    perPregunta: colsText.map(ci=>({pregunta: caps[ci], contestades: files.slice(1).filter(r=>String(r[ci]||'').trim()).length})),
+    checklist: {participants:false, columnes:false, anonimat:false, consentiment:false}
+  };
 
   $('dlg-mapa').close(); mapCtx.resol(true);
   desa(); refresca();
@@ -961,9 +1002,9 @@ Respon NOMÉS amb JSON: {"linies_buides":["variant1","variant2",...],"observacio
       // treu capçaleres [PREGUNTA] que s'han quedat sense resposta a sota
       d.linies = d.linies.filter((l,i,arr)=> !(/^\[.+\]$/.test(l) && (i===arr.length-1 || /^\[.+\]$/.test(arr[i+1]))));
     });
-    const abansDocs = estat.docs.length;
+    const foraNeteja = estat.docs.filter(d=> !d.linies.some(l=>!/^\[.+\]$/.test(l))).map(d=>d.id);
     estat.docs = estat.docs.filter(d=> d.linies.some(l=>!/^\[.+\]$/.test(l)));
-    log('Neteja — aplicada: '+reparades+' línies normalitzades/reparades · '+eliminades+' respostes buides tretes · '+(abansDocs-estat.docs.length)+' documents sense contingut descartats · queden '+estat.docs.length+' documents.');
+    log('Neteja — aplicada: '+reparades+' línies normalitzades/reparades · '+eliminades+' respostes buides tretes · '+foraNeteja.length+' documents sense contingut descartats'+(foraNeteja.length? ' ('+foraNeteja.join(', ')+')' : '')+' · queden '+estat.docs.length+' documents.');
     if(!estat.docs.length) throw new Error('Després de la neteja no queda cap document amb contingut analitzable.');
     desa();
 
@@ -1709,7 +1750,7 @@ $('fitxer-paquet').onchange = async ()=>{
 function esborraProjecte(){
   if(analitzant || ocupatLlibre){ alert('Espera que acabi l\'anàlisi en curs.'); return; }
   if(!confirm('Netejar TOT (fitxer, codis, informe i anàlisis) per començar un tema nou?\n\nLes claus del motor es conserven. Si vols guardar la feina, primer fes «Desa-ho tot en un fitxer» (pestanya 5).')) return;
-  estat = {projecte:{nom:'',pregunta:'',proposit:'',enfocament:'mixt'}, docs:[], codis:{}, informe:'', analisis:{}, descartades:0, taulaFeta:false};
+  estat = {projecte:{nom:'',pregunta:'',proposit:'',enfocament:'mixt'}, docs:[], codis:{}, informe:'', analisis:{}, preparacio:null, descartades:0, taulaFeta:false};
   taulaDades = null; ultimResum = '';
   localStorage.removeItem(CLAU_LS);
   refresca();
@@ -1717,10 +1758,42 @@ function esborraProjecte(){
 $('btn-esborra').onclick = esborraProjecte;
 $('btn-neteja-tot').onclick = esborraProjecte;
 
+/* ──────────── INFORME DE PREPARACIÓ + CHECK-LIST OBLIGATORI (Gibbs cap. 1-2) ──────────── */
+function pintaPreparacio(){
+  const p = estat.preparacio;
+  const zi = $('prep-informe'), zc = $('prep-checklist');
+  if(!p || !estat.docs.length){ zi.innerHTML = ''; zc.innerHTML = ''; return; }
+  let html = '<table style="margin-top:10px; font-size:12.5px;"><tr><th>Recompte de preparació</th><th>Resultat</th></tr>';
+  if(p.filesTotals !== null) html += '<tr><td>Files llegides del fitxer</td><td>'+p.filesTotals+'</td></tr>';
+  html += '<tr><td>Participants amb contingut analitzable</td><td><b>'+p.docs+'</b></td></tr>';
+  html += '<tr><td>Sense cap resposta (exclosos i llistats)</td><td>'+(p.filesBuides.length
+    ? '<span class="avis-text"><b>'+p.filesBuides.length+'</b> — '+esc(p.filesBuides.slice(0,15).join(', '))+(p.filesBuides.length>15?'…':'')+'</span>'
+    : '0 — cap resposta buida ✓')+'</td></tr>';
+  (p.perPregunta||[]).forEach(q=>{
+    const blanc = p.filesTotals - q.contestades;
+    html += '<tr><td>«'+esc(q.pregunta.slice(0,80))+'»</td><td>'+q.contestades+' contestades'+(blanc? ' · <span class="avis-text">'+blanc+' en blanc</span>' : ' ✓')+'</td></tr>';
+  });
+  html += '</table>';
+  zi.innerHTML = html;
+  const items = [
+    ['participants', 'He revisat el recompte: '+p.docs+' participants amb contingut'+(p.filesBuides.length? ' i '+p.filesBuides.length+' exclosos per no haver contestat res' : '')+'.'],
+    ['columnes', 'Les preguntes/columnes que s\'analitzaran són les correctes (mira la taula de dalt).'],
+    ['anonimat', 'No hi queden noms reals sense anonimitzar (si cal, aplica el mapa d\'anonimat de les opcions avançades — Gibbs, cap. 2).'],
+    ['consentiment', 'Tinc consentiment o autorització per analitzar aquestes dades (Gibbs, cap. 1).']
+  ];
+  zc.innerHTML = '<div style="margin-top:12px; border-top:1px dashed var(--ok); padding-top:10px;"><b style="color:var(--accent-fosc);">Check-list de preparació — obligatori per desbloquejar ▶ (GATE, Gibbs cap. 2):</b>'+
+    items.map(([k,t])=>'<label style="display:flex; gap:9px; align-items:baseline; text-transform:none; letter-spacing:0; font-weight:400; font-size:13px; color:var(--tinta); margin-top:7px; cursor:pointer;"><input type="checkbox" data-clau="'+k+'"'+(p.checklist[k]?' checked':'')+' style="width:auto;"><span>'+t+'</span></label>').join('')+'</div>';
+  zc.querySelectorAll('input[type=checkbox]').forEach(ch=> ch.onchange = ()=>{
+    p.checklist[ch.dataset.clau] = ch.checked;
+    desa(); refrescaBoto();
+  });
+}
+
 /* ─────────────────────────── REFRESC GLOBAL ─────────────────────────── */
 function refresca(){
   $('compta-docs').textContent = estat.docs.length ? '· '+estat.docs.length : '';
   $('avis-ok').style.display = estat.docs.length ? '' : 'none';
+  pintaPreparacio();
   const atrs = atributsDisponibles();
   $('sel-atribut').innerHTML = atrs.length ? atrs.map(a=>`<option>${esc(a)}</option>`).join('') : '<option value="">(cap atribut detectat al fitxer)</option>';
   // Abast i instruccions (dos moments sincronitzats: inici i anàlisis a aplicar)
